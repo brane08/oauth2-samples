@@ -1,0 +1,40 @@
+spring:
+  main:
+    banner-mode: off
+  security:
+    oauth2:
+      client:
+        registration:
+          client-oidc:
+            client-id: custom-client
+            client-secret: secret
+            authorization-grant-type: authorization_code
+            redirect-uri: "http://127.0.0.1:8080/login/oauth2/code/{registrationId}"
+            scope: profile,openid
+            client-name: articles-client-oidc
+        provider:
+          client-oidc:
+            issuer-uri: "http://auth-server:9309/uaa"
+            authorization-uri: "http://auth-server:9309/uaa/oauth2/authorize"
+            token-uri: "http://auth-server:9309/uaa/oauth2/token"
+            user-info-uri: "http://auth-server:9309/uaa/userinfo"
+            user-name-attribute: "user_name"
+  cloud:
+    gateway:
+      routes:
+        - id: client1
+          uri: http://localhost:9302
+          predicates:
+            - Path=/mvc/**
+          filters:
+            - RewritePath=/mvc/(?<segment>.*), /$\{segment}
+        - id: client2
+          uri: http://localhost:9303
+          predicates:
+            - Path=/flux/**
+          filters:
+            - RewritePath=/flux/(?<segment>.*), /$\{segment}
+logging:
+  level:
+    "org.springframework.security": debug
+    root: info

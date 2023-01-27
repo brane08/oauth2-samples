@@ -1,0 +1,10 @@
+server:
+  port: 9303
+spring:
+  main:
+    banner-mode: off
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: "http://localhost:9309/uaa"
