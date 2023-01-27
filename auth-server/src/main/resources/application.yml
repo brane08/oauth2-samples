@@ -1,0 +1,15 @@
+server:
+  port: 9309
+  servlet:
+    context-path: /uaa
+  error:
+    whitelabel:
+      enabled: off
+spring:
+  main:
+    banner-mode: off
+
+logging:
+  level:
+    "org.springframework.security": debug
+    root: info
