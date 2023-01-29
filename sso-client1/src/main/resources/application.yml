@@ -1,10 +1,16 @@
 server:
-  port: 9302
+  port: 8081
 spring:
+  application:
+    name: sso-client1
   main:
     banner-mode: off
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: "http://localhost:9309/uaa"
+          issuer-uri: "http://auth-server:8079/uaa"
+logging:
+  level:
+    root: info
+    "org.springframework.security.web": info

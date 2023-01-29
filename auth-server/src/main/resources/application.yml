@@ -1,15 +1,26 @@
 server:
-  port: 9309
+  port: 8079
   servlet:
     context-path: /uaa
   error:
     whitelabel:
       enabled: off
 spring:
+  application:
+    name: oauth2-server
   main:
     banner-mode: off
+  datasource:
+    url: "${AUTH_POSTGRES_URL}"
+    driver-class-name: "org.postgresql.Driver"
+    hikari:
+      pool-name: "auth-server-ds"
+      maximum-pool-size: 7
+      minimum-idle: 2
 
 logging:
   level:
-    "org.springframework.security": debug
     root: info
+    "org.springframework.security": info
+    "org.springframework.jdbc.core": info
+    "org.springframework.security.web.FilterChainProxy": debug

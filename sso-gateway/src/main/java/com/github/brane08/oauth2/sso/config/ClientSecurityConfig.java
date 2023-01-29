@@ -1,21 +1,21 @@
-package com.github.brane08.oauth2.sso;
+package com.github.brane08.oauth2.sso.config;
 
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository;
 
-@Configuration
-public class ClientConfig {
+@EnableWebFluxSecurity
+public class ClientSecurityConfig {
 
 	@Bean
 	public SecurityWebFilterChain filterChain(ServerHttpSecurity http) {
-		return http.authorizeExchange().pathMatchers("/about").permitAll()
+		return http.csrf().csrfTokenRepository(CookieServerCsrfTokenRepository.withHttpOnlyFalse()).and()
+				.authorizeExchange().pathMatchers("/about", "/home").permitAll()
 				.anyExchange().authenticated().and()
 				.oauth2Login().and()
-				.csrf().csrfTokenRepository(CookieServerCsrfTokenRepository.withHttpOnlyFalse()).and()
+				.formLogin().disable()
 				.build();
 	}
 }

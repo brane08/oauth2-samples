@@ -1,4 +1,6 @@
 spring:
+  application:
+    name: gateway-service
   main:
     banner-mode: off
   security:
@@ -6,35 +8,34 @@ spring:
       client:
         registration:
           client-oidc:
-            client-id: custom-client
+            client-id: 1e51989a-f942-4d86-a613-682d34eab40a
             client-secret: secret
             authorization-grant-type: authorization_code
-            redirect-uri: "http://127.0.0.1:8080/login/oauth2/code/{registrationId}"
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             scope: profile,openid
-            client-name: articles-client-oidc
+            client-name: custom-sso-client
         provider:
           client-oidc:
-            issuer-uri: "http://auth-server:9309/uaa"
-            authorization-uri: "http://auth-server:9309/uaa/oauth2/authorize"
-            token-uri: "http://auth-server:9309/uaa/oauth2/token"
-            user-info-uri: "http://auth-server:9309/uaa/userinfo"
-            user-name-attribute: "user_name"
+            issuer-uri: "http://auth-server:8079/uaa"
   cloud:
     gateway:
       routes:
         - id: client1
-          uri: http://localhost:9302
+          uri: http://localhost:8081
           predicates:
             - Path=/mvc/**
           filters:
-            - RewritePath=/mvc/(?<segment>.*), /$\{segment}
+            - RewritePath=/mvc(?<segment>.*), /$\{segment}
         - id: client2
-          uri: http://localhost:9303
+          uri: http://localhost:8082
           predicates:
             - Path=/flux/**
           filters:
-            - RewritePath=/flux/(?<segment>.*), /$\{segment}
+            - RewritePath=/flux(?<segment>.*), /$\{segment}
+      default-filters:
+        - TokenRelay=
 logging:
   level:
-    "org.springframework.security": debug
     root: info
+    "org.springframework.security": debug
+    "org.springframework.cloud.gateway": info
