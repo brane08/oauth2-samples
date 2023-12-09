@@ -4,22 +4,92 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.github.brane08</groupId>
+    <groupId>com.github.brane08.oauth2</groupId>
     <artifactId>oauth2-samples</artifactId>
     <version>0.1</version>
     <packaging>pom</packaging>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.4</version>
+        <!-- lookup parent from repository -->
+        <relativePath/>
+    </parent>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <roject.build.sourceEncoding>UTF-8</roject.build.sourceEncoding>
+
+        <spring-boot.version>3.2.4</spring-boot.version>
     </properties>
 
     <modules>
         <module>auth-server</module>
         <module>sso-gateway</module>
+        <module>sso-gateway-mvc</module>
         <module>sso-client1</module>
         <module>sso-client2</module>
     </modules>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>versions-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>versions-maven-plugin</artifactId>
+                    <version>2.16.2</version>
+                    <configuration>
+                        <ruleSet>
+                            <ignoreVersions>
+                                <ignoreVersion>
+                                    <type>regex</type>
+                                    <version>.*[\.|-]+[alpha|Alpha|Alpha-|beta|Beta|Beta-]+[\.|-]*\d*</version>
+                                </ignoreVersion>
+                                <ignoreVersion>
+                                    <type>regex</type>
+                                    <version>.*[\.|-]+[M|m|RC|rc|b|B]+[\.|-]*\d*</version>
+                                </ignoreVersion>
+                            </ignoreVersions>
+                            <comparisonMethod>maven</comparisonMethod>
+                        </ruleSet>
+                        <comparisonMethod>maven</comparisonMethod>
+                        <processDependencyManagement>false</processDependencyManagement>
+                        <processDependencyManagementTransitive>false</processDependencyManagementTransitive>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <version>3.4.1</version>
+                    <executions>
+                        <execution>
+                            <id>enforce-versions</id>
+                            <goals>
+                                <goal>enforce</goal>
+                            </goals>
+                            <configuration>
+                                <rules>
+                                    <requireMavenVersion>
+                                        <version>3.9.0</version>
+                                    </requireMavenVersion>
+                                </rules>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 
 </project>

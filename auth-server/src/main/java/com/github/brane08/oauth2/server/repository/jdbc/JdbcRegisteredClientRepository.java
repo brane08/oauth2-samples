@@ -4,10 +4,15 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.brane08.oauth2.server.domain.CustomRegisteredClient;
 import com.github.brane08.oauth2.server.repository.CustomRegisteredClientRepository;
+import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
@@ -16,6 +21,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -24,20 +31,64 @@ import java.util.Set;
 @Component
 public class JdbcRegisteredClientRepository implements RegisteredClientRepository {
 
+    private static final Logger log = LoggerFactory.getLogger(JdbcRegisteredClientRepository.class);
     private static final TypeReference<Map<String, Object>> MAP_TYPE_REFERENCE = new TypeReference<>() {
     };
+    private static final String DEFAULT_CLIENT_ID = "2e8347f2-ccac-4d03-bc2c-cc733ec4da10";
 
     private final CustomRegisteredClientRepository clientRepository;
     private final JdbcAggregateTemplate aggregateTemplate;
     private final ObjectMapper securityObjectMapper;
+    private final PasswordEncoder encoder;
 
     public JdbcRegisteredClientRepository(@Qualifier("securityObjectMapper") ObjectMapper securityObjectMapper,
                                           CustomRegisteredClientRepository clientRepository,
-                                          JdbcAggregateTemplate aggregateTemplate) {
+                                          JdbcAggregateTemplate aggregateTemplate, PasswordEncoder encoder) {
         Assert.notNull(clientRepository, "clientRepository cannot be null");
         this.securityObjectMapper = securityObjectMapper;
         this.clientRepository = clientRepository;
         this.aggregateTemplate = aggregateTemplate;
+        this.encoder = encoder;
+    }
+
+    @PostConstruct
+    public void checkAndSaveDefaultClient() {
+        RegisteredClient defaultClient = findByClientId(DEFAULT_CLIENT_ID);
+        if (defaultClient != null) {
+            log.info("Default client found, skipping init");
+            return;
+        }
+
+        TokenSettings tokenSettings = TokenSettings.builder().accessTokenTimeToLive(Duration.ofDays(1L))
+                .authorizationCodeTimeToLive(Duration.ofMinutes(10L)).refreshTokenTimeToLive(Duration.ofDays(30L))
+                .build();
+        RegisteredClient registeredClient = RegisteredClient.withId(DEFAULT_CLIENT_ID)
+                .clientId(DEFAULT_CLIENT_ID)
+                .clientName("custom-sso-client")
+                .clientSecret(encoder.encode("secret"))
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+                .clientIdIssuedAt(Instant.now())
+                .clientSecretExpiresAt(Instant.now().plus(Duration.ofDays(365 * 2)))
+                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+                .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+                .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+                .redirectUri("http://localhost:8078/login/oauth2/code/client-oidc")
+                .redirectUri("http://localhost:8078/oauth2/code/client-oidc")
+                .redirectUri("http://localhost:8078/callback")
+                .redirectUri("http://localhost:8078/authorized")
+                .redirectUri("http://localhost:8078/")
+                .redirectUri("http://localhost:8077/login/oauth2/code/client-oidc")
+                .redirectUri("http://localhost:8077/oauth2/code/client-oidc")
+                .redirectUri("http://localhost:8077/callback")
+                .redirectUri("http://localhost:8077/authorized")
+                .redirectUri("http://localhost:8077/")
+                .scope(OidcScopes.OPENID)
+                .scope(OidcScopes.PROFILE)
+                .scope(OidcScopes.EMAIL)
+                .tokenSettings(tokenSettings)
+                .clientSettings(ClientSettings.builder().requireAuthorizationConsent(false).build())
+                .build();
+        this.save(registeredClient);
     }
 
     @Override

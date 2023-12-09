@@ -1,8 +1,11 @@
 server:
-  port: 8078
+  port: 8077
+  error:
+    whitelabel:
+      enabled: off
 spring:
   application:
-    name: gateway-service
+    name: gateway-service-mvc
   main:
     banner-mode: off
   security:
@@ -21,24 +24,24 @@ spring:
             issuer-uri: "http://localhost:8079/uaa"
   cloud:
     gateway:
-      routes:
-        - id: client1
-          uri: http://localhost:8081
-          predicates:
-            - Path=/mvc/**
-          filters:
-            - RewritePath=/mvc(?<segment>.*), /$\{segment}
-        - id: client2
-          uri: http://localhost:8082
-          predicates:
-            - Path=/flux/**
-          filters:
-            - RewritePath=/flux(?<segment>.*), /$\{segment}
-      default-filters:
-        - TokenRelay=
+      mvc:
+        routes:
+          - id: client1
+            uri: http://localhost:8081
+            predicates:
+              - Path=/mvc/**
+            filters:
+              - RewritePath=/mvc(?<segment>.*), /$\{segment}
+              - TokenRelay=
+          - id: client2
+            uri: http://localhost:8082
+            predicates:
+              - Path=/flux/**
+            filters:
+              - RewritePath=/flux(?<segment>.*), /$\{segment}
+              - TokenRelay=
 logging:
   level:
     root: info
     "org.springframework.security": info
     "org.springframework.cloud.gateway": info
-    "org.springframework.web": debug
