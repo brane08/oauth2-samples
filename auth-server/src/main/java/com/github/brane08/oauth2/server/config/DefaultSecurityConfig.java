@@ -19,21 +19,21 @@ import java.util.Map;
 @Configuration(proxyBeanMethods = false)
 public class DefaultSecurityConfig {
 
-	@Bean
-	@Order(Ordered.HIGHEST_PRECEDENCE + 1)
-	public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
-		http.authorizeHttpRequests((authorize) ->
-						authorize.requestMatchers("/registered-clients/*").permitAll()
-								.anyRequest().authenticated())
-				.formLogin(Customizer.withDefaults());
-		return http.build();
-	}
+    @Bean
+    @Order(Ordered.HIGHEST_PRECEDENCE + 1)
+    public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
+        http.authorizeHttpRequests((authorize) ->
+                        authorize.requestMatchers("/registered-clients/*").permitAll()
+                                .anyRequest().authenticated())
+                .formLogin(Customizer.withDefaults());
+        return http.build();
+    }
 
-	@Bean
-	public PasswordEncoder passwordEncoder() {
-		String prefix = "pbkdf2@5.8";
-		Map<String, PasswordEncoder> encoderMap = new HashMap<>();
-		encoderMap.put("pbkdf2@5.8", Pbkdf2PasswordEncoder.defaultsForSpringSecurity_v5_8());
-		return new DelegatingPasswordEncoder(prefix, encoderMap);
-	}
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        String prefix = "pbkdf2@5.8";
+        Map<String, PasswordEncoder> encoderMap = new HashMap<>();
+        encoderMap.put("pbkdf2@5.8", Pbkdf2PasswordEncoder.defaultsForSpringSecurity_v5_8());
+        return new DelegatingPasswordEncoder(prefix, encoderMap);
+    }
 }

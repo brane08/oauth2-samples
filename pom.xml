@@ -9,10 +9,19 @@
     <version>0.1</version>
     <packaging>pom</packaging>
 
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.0</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <spring-boot.version>3.2.0</spring-boot.version>
     </properties>
 
     <modules>
@@ -21,5 +30,66 @@
         <module>sso-client1</module>
         <module>sso-client2</module>
     </modules>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>versions-maven-plugin</artifactId>
+                    <version>2.16.0</version>
+                    <configuration>
+                        <ruleSet>
+                            <ignoreVersions>
+                                <ignoreVersion>
+                                    <type>regex</type>
+                                    <version>.*\.Beta\d*</version>
+                                </ignoreVersion>
+                                <ignoreVersion>
+                                    <type>regex</type>
+                                    <version>.*-Beta\d*</version>
+                                </ignoreVersion>
+                                <ignoreVersion>
+                                    <type>regex</type>
+                                    <version>.*-beta\d*</version>
+                                </ignoreVersion>
+                                <ignoreVersion>
+                                    <type>regex</type>
+                                    <version>.*-beta-\d*</version>
+                                </ignoreVersion>
+                                <ignoreVersion>
+                                    <type>regex</type>
+                                    <version>.*-b\d+</version>
+                                </ignoreVersion>
+                                <ignoreVersion>
+                                    <type>regex</type>
+                                    <version>.*\.Alpha\d*</version>
+                                </ignoreVersion>
+                                <ignoreVersion>
+                                    <type>regex</type>
+                                    <version>.*-alpha\d*</version>
+                                </ignoreVersion>
+                                <ignoreVersion>
+                                    <type>regex</type>
+                                    <version>.*-alpha-\d*</version>
+                                </ignoreVersion>
+                                <ignoreVersion>
+                                    <type>regex</type>
+                                    <version>.*-rc[\\d]*,.*-RC[\\]d*</version>
+                                </ignoreVersion>
+                                <ignoreVersion>
+                                    <type>regex</type>
+                                    <version>.*\.M\d+</version>
+                                </ignoreVersion>
+                            </ignoreVersions>
+                            <comparisonMethod>maven</comparisonMethod>
+                        </ruleSet>
+                        <processDependencyManagement>false</processDependencyManagement>
+                        <processDependencyManagementTransitive>false</processDependencyManagementTransitive>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 
 </project>

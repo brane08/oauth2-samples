@@ -37,5 +37,5 @@ spring:
 logging:
   level:
     root: info
-    "org.springframework.security": debug
+    "org.springframework.security": info
     "org.springframework.cloud.gateway": info
