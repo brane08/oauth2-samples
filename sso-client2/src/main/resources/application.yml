@@ -1,6 +1,8 @@
 server:
   port: 8082
 spring:
+  webflux:
+    base-path: /flux
   application:
     name: sso-client2
   main:

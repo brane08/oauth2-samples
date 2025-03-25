@@ -14,7 +14,6 @@
     <description>auth-server</description>
     <properties>
         <java.version>21</java.version>
-        <auth-server.version>1.2.3</auth-server.version>
     </properties>
     <dependencies>
         <dependency>
@@ -46,7 +45,6 @@
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-oauth2-authorization-server</artifactId>
-            <version>${auth-server.version}</version>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>

@@ -2,9 +2,14 @@ server:
   port: 8079
   servlet:
     context-path: /uaa
-  error:
-    whitelabel:
-      enabled: off
+  ssl:
+    key-store: "${user.dir}/../certs/private.p12"
+    key-store-password: "changeit"
+    key-alias: "localhost"
+    trust-store: "${user.dir}/../certs/trust.jks"
+    trust-store-password: "changeit"
+  forward-headers-strategy: framework
+
 spring:
   application:
     name: oauth2-server

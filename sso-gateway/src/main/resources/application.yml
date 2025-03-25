@@ -1,5 +1,12 @@
 server:
   port: 8078
+  ssl:
+    key-store: "${user.dir}/../certs/private.p12"
+    key-store-password: "changeit"
+    key-store-type: "pkcs12"
+    key-alias: "localhost"
+    trust-store: "${user.dir}/../certs/trust.jks"
+    trust-store-password: "changeit"
 spring:
   application:
     name: gateway-service
@@ -18,7 +25,7 @@ spring:
             client-name: custom-sso-client
         provider:
           client-oidc:
-            issuer-uri: "http://localhost:8079/uaa"
+            issuer-uri: "https://localhost:8079/uaa"
   cloud:
     gateway:
       routes:
@@ -27,13 +34,13 @@ spring:
           predicates:
             - Path=/mvc/**
           filters:
-            - RewritePath=/mvc(?<segment>.*), /$\{segment}
+            - RewritePath=/mvc(?<segment>.*), /mvc/$\{segment}
         - id: client2
           uri: http://localhost:8082
           predicates:
             - Path=/flux/**
           filters:
-            - RewritePath=/flux(?<segment>.*), /$\{segment}
+            - RewritePath=/flux(?<segment>.*), /flux/$\{segment}
       default-filters:
         - TokenRelay=
 logging:
