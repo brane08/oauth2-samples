@@ -1,0 +1,47 @@
+server:
+  port: 8077
+  error:
+    whitelabel:
+      enabled: off
+spring:
+  application:
+    name: gateway-service-mvc
+  main:
+    banner-mode: off
+  security:
+    oauth2:
+      client:
+        registration:
+          client-oidc:
+            client-id: 2e8347f2-ccac-4d03-bc2c-cc733ec4da10
+            client-secret: secret
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: profile,openid
+            client-name: custom-sso-client
+        provider:
+          client-oidc:
+            issuer-uri: "http://localhost:8079/uaa"
+  cloud:
+    gateway:
+      mvc:
+        routes:
+          - id: client1
+            uri: http://localhost:8081
+            predicates:
+              - Path=/mvc/**
+            filters:
+              - RewritePath=/mvc(?<segment>.*), /$\{segment}
+              - TokenRelay=
+          - id: client2
+            uri: http://localhost:8082
+            predicates:
+              - Path=/flux/**
+            filters:
+              - RewritePath=/flux(?<segment>.*), /$\{segment}
+              - TokenRelay=
+logging:
+  level:
+    root: info
+    "org.springframework.security": info
+    "org.springframework.cloud.gateway": info

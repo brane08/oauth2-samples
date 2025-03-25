@@ -2,21 +2,28 @@ server:
   port: 8079
   servlet:
     context-path: /uaa
-  error:
-    whitelabel:
-      enabled: off
+  ssl:
+    key-store: "${user.dir}/../certs/private.p12"
+    key-store-password: "changeit"
+    key-alias: "localhost"
+    trust-store: "${user.dir}/../certs/trust.jks"
+    trust-store-password: "changeit"
+  forward-headers-strategy: framework
+
 spring:
   application:
     name: oauth2-server
   main:
     banner-mode: off
   datasource:
-    url: "${AUTH_POSTGRES_URL}"
+    url: "jdbc:postgresql://localhost:5432/prore?currentSchema=oauth2"
     driver-class-name: "org.postgresql.Driver"
     hikari:
       pool-name: "auth-server-ds"
       maximum-pool-size: 7
-      minimum-idle: 2
+      minimum-idle: 1
+    username: "postgres"
+    password: ""
 
 logging:
   level:

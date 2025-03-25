@@ -1,3 +1,12 @@
+server:
+  port: 8078
+  ssl:
+    key-store: "${user.dir}/../certs/private.p12"
+    key-store-password: "changeit"
+    key-store-type: "pkcs12"
+    key-alias: "localhost"
+    trust-store: "${user.dir}/../certs/trust.jks"
+    trust-store-password: "changeit"
 spring:
   application:
     name: gateway-service
@@ -8,7 +17,7 @@ spring:
       client:
         registration:
           client-oidc:
-            client-id: 1e51989a-f942-4d86-a613-682d34eab40a
+            client-id: 2e8347f2-ccac-4d03-bc2c-cc733ec4da10
             client-secret: secret
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
@@ -16,7 +25,7 @@ spring:
             client-name: custom-sso-client
         provider:
           client-oidc:
-            issuer-uri: "http://auth-server:8079/uaa"
+            issuer-uri: "https://localhost:8079/uaa"
   cloud:
     gateway:
       routes:
@@ -25,17 +34,18 @@ spring:
           predicates:
             - Path=/mvc/**
           filters:
-            - RewritePath=/mvc(?<segment>.*), /$\{segment}
+            - RewritePath=/mvc(?<segment>.*), /mvc/$\{segment}
         - id: client2
           uri: http://localhost:8082
           predicates:
             - Path=/flux/**
           filters:
-            - RewritePath=/flux(?<segment>.*), /$\{segment}
+            - RewritePath=/flux(?<segment>.*), /flux/$\{segment}
       default-filters:
         - TokenRelay=
 logging:
   level:
     root: info
-    "org.springframework.security": debug
+    "org.springframework.security": info
     "org.springframework.cloud.gateway": info
+    "org.springframework.web": debug
