@@ -1,0 +1,28 @@
+server:
+  port: 8077
+  ssl:
+    key-store-type: PKCS12
+    key-store: "${user.dir}/../certs/sas.p12"
+    key-store-password: "changeit"
+    key-alias: "sas"
+    enabled: false
+  error:
+    include-exception: true
+    include-stacktrace: always
+    include-message: always
+
+spring:
+  application:
+    name: static-oauth2-server
+  main:
+    banner-mode: off
+
+logging:
+  charset:
+    file: UTF-8
+  file:
+    name: "${user.dir}/logs/static-auth-server.log"
+  level:
+    root: info
+    "org.springframework.security.web": debug
+    "org.springframework.security.oauth2": debug
