@@ -1,12 +1,15 @@
 server:
   port: 8078
   ssl:
-    key-store: "${user.dir}/../certs/private.p12"
+    key-store-type: PKCS12
+    key-store: "${user.dir}/../certs/client.p12"
     key-store-password: "changeit"
-    key-store-type: "pkcs12"
-    key-alias: "localhost"
-    trust-store: "${user.dir}/../certs/trust.jks"
+    key-alias: "client"
+    trust-store-type: JKS
+    trust-store: "${user.dir}/../certs/truststore.jks"
     trust-store-password: "changeit"
+    enabled: false
+
 spring:
   application:
     name: gateway-service
@@ -16,36 +19,53 @@ spring:
     oauth2:
       client:
         registration:
-          client-oidc:
-            client-id: 2e8347f2-ccac-4d03-bc2c-cc733ec4da10
-            client-secret: secret
+#          client-oidc:
+#            client-id: 2e8347f2-ccac-4d03-bc2c-cc733ec4da10
+#            client-secret: secret
+#            authorization-grant-type: authorization_code
+#            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+#            scope: profile,openid
+#            client-name: custom-sso-client
+          static-oidc:
+            client-id: 8d0342a6-d045-434a-a5a3-2ad4976a07aa
+            client-secret: "secret"
+            client-authentication-method: basic
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
-            scope: profile,openid
-            client-name: custom-sso-client
+            scope:
+              - "profile"
+              - "openid"
         provider:
-          client-oidc:
-            issuer-uri: "https://localhost:8079/uaa"
+#          client-oidc:
+#            issuer-uri: "http://localhost:8079/uaa"
+          static-oidc:
+            issuer-uri: "http://localhost:8077"
   cloud:
     gateway:
-      routes:
-        - id: client1
-          uri: http://localhost:8081
-          predicates:
-            - Path=/mvc/**
-          filters:
-            - RewritePath=/mvc(?<segment>.*), /mvc/$\{segment}
-        - id: client2
-          uri: http://localhost:8082
-          predicates:
-            - Path=/flux/**
-          filters:
-            - RewritePath=/flux(?<segment>.*), /flux/$\{segment}
-      default-filters:
-        - TokenRelay=
+      server:
+        webflux:
+          routes:
+            - id: client1
+              uri: http://localhost:8081
+              predicates:
+                - Path=/mvc/**
+              filters:
+                - RewritePath=/mvc(?<segment>.*), /mvc/$\{segment}
+            - id: client2
+              uri: http://localhost:8082
+              predicates:
+                - Path=/flux/**
+              filters:
+                - RewritePath=/flux(?<segment>.*), /flux/$\{segment}
+          default-filters:
+            - TokenRelay=
 logging:
+  charset:
+    file: UTF-8
+  file:
+    name: "${user.dir}/logs/sso-gateway.log"
   level:
     root: info
-    "org.springframework.security": info
+    "org.springframework.security": trace
     "org.springframework.cloud.gateway": info
-    "org.springframework.web": debug
+    "org.springframework.web": info

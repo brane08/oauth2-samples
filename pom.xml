@@ -11,7 +11,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.4</version>
+        <version>3.5.5</version>
         <!-- lookup parent from repository -->
         <relativePath/>
     </parent>
@@ -21,12 +21,13 @@
         <maven.compiler.target>21</maven.compiler.target>
         <roject.build.sourceEncoding>UTF-8</roject.build.sourceEncoding>
 
-        <spring-boot.version>3.4.4</spring-boot.version>
-        <spring-cloud.version>2024.0.0</spring-cloud.version>
+        <spring-boot.version>3.5.5</spring-boot.version>
+        <spring-cloud.version>2025.0.0</spring-cloud.version>
     </properties>
 
     <modules>
-        <module>auth-server</module>
+        <module>jdbc-auth-server</module>
+        <module>static-auth-server</module>
         <module>sso-gateway</module>
         <module>sso-gateway-mvc</module>
         <module>sso-client1</module>
@@ -73,7 +74,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-enforcer-plugin</artifactId>
-                    <version>3.5.0</version>
+                    <version>3.6.1</version>
                     <inherited>true</inherited>
                     <executions>
                         <execution>

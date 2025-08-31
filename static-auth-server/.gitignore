@@ -9,14 +9,8 @@ target/
 *.iws
 *.iml
 *.ipr
-/out/
-/output/
 
 ### VS Code ###
 .vscode/
 
 logs/
-
-.env
-
-/*.http
