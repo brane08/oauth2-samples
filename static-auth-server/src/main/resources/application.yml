@@ -16,6 +16,10 @@ spring:
     name: static-oauth2-server
   main:
     banner-mode: off
+  mvc:
+    view:
+      prefix: "/WEB-INF/jsp/"
+      suffix: ".jsp"
 
 logging:
   charset:
@@ -26,3 +30,4 @@ logging:
     root: info
     "org.springframework.security.web": debug
     "org.springframework.security.oauth2": debug
+    "com.github.brane08.oauth2.server": debug
