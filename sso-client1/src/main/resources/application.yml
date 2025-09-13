@@ -14,6 +14,7 @@ spring:
       pool-name: "auth-server-ds"
       maximum-pool-size: 7
       minimum-idle: 1
+      auto-commit: false
     username: "postgres"
     password: ""
   jpa:
@@ -23,7 +24,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: "http://localhost:8079/uaa"
+          issuer-uri: "http://localhost:8077"
 logging:
   level:
     root: info

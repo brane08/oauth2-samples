@@ -1,5 +1,6 @@
 package com.github.brane08.oauth2.server.config;
 
+import com.github.brane08.oauth2.server.filters.JwtCookieFilter;
 import com.github.brane08.oauth2.server.services.CookieAwareUserDetailsService;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
@@ -42,7 +43,10 @@ import org.springframework.security.oauth2.server.authorization.token.JwtEncodin
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
@@ -68,36 +72,39 @@ public class StaticAuthServerConfig {
 
 	@Bean
 	@Order(Ordered.HIGHEST_PRECEDENCE)
-	public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+	public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http,
+																	  UserDetailsService userDetailsService,
+																	  AuthenticationSuccessHandler successHandler) throws Exception {
 		final OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
 		// @formatter:off
 		http
 			.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
-			.with(authorizationServerConfigurer, configurer ->
-					configurer
-						.oidc(Customizer.withDefaults())
-						.tokenRevocationEndpoint(Customizer.withDefaults())
-						.tokenIntrospectionEndpoint(Customizer.withDefaults())
+			.with(authorizationServerConfigurer, configurer -> configurer
+				.oidc(Customizer.withDefaults())
+				.tokenRevocationEndpoint(Customizer.withDefaults())
+				.tokenIntrospectionEndpoint(Customizer.withDefaults())
 			)
 			.csrf(csrf -> csrf.ignoringRequestMatchers(authorizationServerConfigurer.getEndpointsMatcher()))
 			.securityContext(sc -> sc.securityContextRepository(new HttpSessionSecurityContextRepository()))
-			.authorizeHttpRequests((authorize) ->
-				authorize.requestMatchers("/.well-known/**", "/error").permitAll()
+			.authorizeHttpRequests((authorize) -> authorize
+				.requestMatchers("/.well-known/**", "/error").permitAll()
 				.anyRequest().authenticated()
 			)
-			.exceptionHandling((exceptions) ->
-					exceptions.defaultAuthenticationEntryPointFor(
-						new LoginUrlAuthenticationEntryPoint("/login"),
-						new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
-					)
+			.exceptionHandling((exceptions) -> exceptions
+				.defaultAuthenticationEntryPointFor(
+					new LoginUrlAuthenticationEntryPoint("/login"),
+					new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
+				)
 			);
+		http.addFilterBefore(new JwtCookieFilter(userDetailsService, successHandler), UsernamePasswordAuthenticationFilter.class);
 		// @formatter:on
 		return http.build();
 	}
 
 	@Bean
 	@Order(Ordered.HIGHEST_PRECEDENCE + 1)
-	public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
+	public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http, UserDetailsService userDetailsService,
+														  AuthenticationSuccessHandler successHandler) throws Exception {
 		// @formatter:off
 		http
 			.authorizeHttpRequests((authorize) -> authorize
@@ -107,17 +114,21 @@ public class StaticAuthServerConfig {
 			.formLogin(form -> form
 				.loginPage("/login").loginProcessingUrl("/login").permitAll()
 			)
-			.securityContext(sc -> sc.securityContextRepository(new HttpSessionSecurityContextRepository()))
-			.requestCache(c -> c.requestCache(new HttpSessionRequestCache() {
-				@Override
-				public void saveRequest(HttpServletRequest req, HttpServletResponse res) {
-					String uri = req.getRequestURI();
-					if ("/".equals(uri) ||"/login".equals(uri)) {
-						return; // don’t save /login — avoids loops
+			.securityContext(sc -> sc
+				.securityContextRepository(new HttpSessionSecurityContextRepository())
+			)
+			.requestCache(c -> c
+				.requestCache(new HttpSessionRequestCache() {
+					@Override
+					public void saveRequest(HttpServletRequest req, HttpServletResponse res) {
+						String uri = req.getRequestURI();
+						if ("/".equals(uri) ||"/login".equals(uri)) {
+							return; // don’t save /login — avoids loops
+						}
+						super.saveRequest(req, res);
 					}
-					super.saveRequest(req, res);
-				}
 			}));
+		http.addFilterBefore(new JwtCookieFilter(userDetailsService, successHandler), UsernamePasswordAuthenticationFilter.class);
 		// @formatter:on
 		return http.build();
 	}
@@ -198,5 +209,13 @@ public class StaticAuthServerConfig {
 	@Bean
 	public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
 		return config.getAuthenticationManager();
+	}
+
+	@Bean
+	public AuthenticationSuccessHandler authenticationSuccessHandler() {
+		var successHandler = new SavedRequestAwareAuthenticationSuccessHandler();
+		successHandler.setDefaultTargetUrl("/");
+		successHandler.setAlwaysUseDefaultTargetUrl(false);
+		return successHandler;
 	}
 }
