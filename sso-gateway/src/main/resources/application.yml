@@ -63,6 +63,17 @@ spring:
                 - RewritePath=/flux(?<segment>.*), /flux/$\{segment}
           default-filters:
             - TokenRelay=
+  session:
+    store-type: redis
+    redis:
+      namespace: bff:websession
+      flush-mode: on_save
+      save-mode: on_set_attribute
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
 logging:
   charset:
     file: UTF-8
@@ -70,6 +81,8 @@ logging:
     name: "${user.dir}/logs/sso-gateway.log"
   level:
     root: info
-    "org.springframework.security": trace
+    "org.springframework.security": debug
     "org.springframework.cloud.gateway": info
     "org.springframework.web": info
+    "org.springframework.data.redis": debug
+    "org.springframework.session.redis": debug
