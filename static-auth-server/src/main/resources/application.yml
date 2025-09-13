@@ -11,6 +11,13 @@ server:
     include-stacktrace: always
     include-message: always
   forward-headers-strategy: framework
+  servlet:
+    session:
+      timeout: 30m
+      cookie:
+        http-only: true
+        secure: false
+        same-site: lax
 
 spring:
   application:
@@ -21,6 +28,16 @@ spring:
     view:
       prefix: "/WEB-INF/jsp/"
       suffix: ".jsp"
+  session:
+    store-type: redis
+    redis:
+      namespace: sas:session
+      flush-mode: on_save
+      save-mode: on_set_attribute
+  data:
+    redis:
+      host: localhost
+      port: 6379
 
 logging:
   charset:
@@ -32,3 +49,5 @@ logging:
     "org.springframework.security.web": debug
     "org.springframework.security.oauth2": debug
     "com.github.brane08.oauth2.server": debug
+    "org.springframework.data.redis": debug
+    "org.springframework.session.redis": debug
