@@ -12,12 +12,20 @@ import org.springframework.security.web.server.csrf.CookieServerCsrfTokenReposit
 @EnableWebFluxSecurity
 public class ClientSecurityConfig {
 
-    @Bean
-    public SecurityWebFilterChain filterChain(ServerHttpSecurity http) {
-        return http.csrf(csrf -> csrf.csrfTokenRepository(CookieServerCsrfTokenRepository.withHttpOnlyFalse()))
-                .authorizeExchange(ae -> ae.pathMatchers("/about", "/home", "default.html").permitAll()
-                        .anyExchange().authenticated())
-                .oauth2Login(Customizer.withDefaults())
-                .build();
-    }
+	@Bean
+	public SecurityWebFilterChain filterChain(ServerHttpSecurity http) {
+		// @formatter:off
+		var csrfRepo = CookieServerCsrfTokenRepository.withHttpOnlyFalse();
+		csrfRepo.setCookiePath("/");
+        http.csrf(csrf -> csrf
+				.csrfTokenRepository(csrfRepo))
+			.authorizeExchange(ae -> ae
+				.pathMatchers("/actuator/**", "/assets/**", "/favicon.ico").permitAll()
+				.pathMatchers("/login", "/logout", "/oauth2/**").permitAll()
+				.pathMatchers("/about", "/home", "default.html").permitAll()
+				.anyExchange().authenticated())
+			.oauth2Login(Customizer.withDefaults());
+		// @formatter:on
+		return http.build();
+	}
 }
