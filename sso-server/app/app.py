@@ -9,7 +9,7 @@ SECRET_KEY = "XLxwEzxLmowhWCuOSzSQrm6GoI0PJFByD08n4XYs+f8XtZMh6ioy7fzzgmCRmjQK"
 ALGORITHM = "HS256"
 
 # Fake user DB
-USERS = {"alice": "password123", "bob": "secret"}
+USERS = {"user1": "password", "user2": "password"}
 
 
 def _build_token_cookie(service_url: str, username: str) -> Response:
@@ -38,7 +38,7 @@ def _build_simple_cookie(service_url: str, username: str) -> Response:
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    service_url = request.args.get("redirect", "http://localhost:8078/")
+    service_url = request.args.get("redirect", "http://localhost:8078/mvc")
 
     if request.method == "POST":
         username = request.form.get("username")

@@ -29,7 +29,6 @@ spring:
       prefix: "/WEB-INF/jsp/"
       suffix: ".jsp"
   session:
-    store-type: redis
     redis:
       namespace: sas:session
       flush-mode: on_save
@@ -40,10 +39,6 @@ spring:
       port: 6379
 
 logging:
-  charset:
-    file: UTF-8
-  file:
-    name: "${user.dir}/logs/static-auth-server.log"
   level:
     root: info
     "org.springframework.security.web": debug
