@@ -24,7 +24,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: "http://localhost:8077"
+          issuer-uri: "http://localhost:8079/uaa"
 logging:
   level:
     root: info

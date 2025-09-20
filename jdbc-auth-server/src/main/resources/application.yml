@@ -9,6 +9,11 @@ server:
     trust-store: "${user.dir}/../certs/trust.jks"
     trust-store-password: "changeit"
     enabled: false
+  error:
+    include-exception: true
+    include-stacktrace: always
+    include-message: always
+  forward-headers-strategy: framework
 
 spring:
   application:
@@ -24,10 +29,23 @@ spring:
       minimum-idle: 1
     username: "postgres"
     password: ""
+  mvc:
+    view:
+      prefix: "/WEB-INF/jsp/"
+      suffix: ".jsp"
+  session:
+    redis:
+      namespace: sas:session
+      flush-mode: on_save
+      save-mode: on_set_attribute
+  data:
+    redis:
+      host: localhost
+      port: 6379
 
 logging:
   level:
     root: info
-    "org.springframework.security": info
-    "org.springframework.jdbc.core": info
-    "org.springframework.security.web.FilterChainProxy": debug
+    "org.springframework.security.web": debug
+    "org.springframework.security.oauth2": debug
+    "com.github.brane08.oauth2.server": debug

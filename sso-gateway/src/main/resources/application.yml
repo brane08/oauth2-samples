@@ -9,6 +9,10 @@ server:
     trust-store: "${user.dir}/../certs/truststore.jks"
     trust-store-password: "changeit"
     enabled: false
+  error:
+    include-exception: true
+    include-stacktrace: always
+    include-message: always
   forward-headers-strategy: framework
 
 spring:
@@ -20,13 +24,15 @@ spring:
     oauth2:
       client:
         registration:
-#          client-oidc:
-#            client-id: 2e8347f2-ccac-4d03-bc2c-cc733ec4da10
-#            client-secret: secret
-#            authorization-grant-type: authorization_code
-#            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
-#            scope: profile,openid
-#            client-name: custom-sso-client
+          client-oidc:
+            client-id: 2e8347f2-ccac-4d03-bc2c-cc733ec4da10
+            client-secret: secret
+            client-authentication-method: client_secret_basic
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope:
+              - profile
+              - openid
           static-oidc:
             client-id: 8d0342a6-d045-434a-a5a3-2ad4976a07aa
             client-secret: "secret"
@@ -34,13 +40,16 @@ spring:
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             scope:
-              - "profile"
-              - "openid"
+              - profile
+              - openid
         provider:
-#          client-oidc:
-#            issuer-uri: "http://localhost:8079/uaa"
+          client-oidc:
+            #            issuer-uri: "http://localhost:8079/uaa"
+            authorization-uri: "http://localhost:8079/uaa/oauth2/authorize"
+            token-uri: "http://localhost:8079/uaa/oauth2/token"
+            jwk-set-uri: "http://localhost:8079/uaa/oauth2/jwks"
           static-oidc:
-#            issuer-uri: "http://localhost:8077"
+            #            issuer-uri: "http://localhost:8077"
             authorization-uri: "http://localhost:8077/oauth2/authorize"
             token-uri: "http://localhost:8077/oauth2/token"
             jwk-set-uri: "http://localhost:8077/oauth2/jwks"
@@ -49,22 +58,35 @@ spring:
       server:
         webflux:
           routes:
+            - id: auth-me
+              uri: http://localhost:8079
+              predicates:
+                - Path=/uaa/**
+              filters:
+                - RewritePath=/uaa(?<segment>.*), /uaa/$\{segment}
             - id: client1
               uri: http://localhost:8081
               predicates:
                 - Path=/mvc/**
               filters:
                 - RewritePath=/mvc(?<segment>.*), /mvc/$\{segment}
+                - RemoveRequestHeader=Cookie
             - id: client2
               uri: http://localhost:8082
               predicates:
                 - Path=/flux/**
               filters:
                 - RewritePath=/flux(?<segment>.*), /flux/$\{segment}
+                - RemoveRequestHeader=Cookie
           default-filters:
             - TokenRelay=
+          httpclient:
+            connect-timeout: 15000
+            response-timeout: 60000
+            wiretap: true
+            pool:
+              metrics: true
   session:
-    store-type: redis
     redis:
       namespace: bff:websession
       flush-mode: on_save
@@ -75,14 +97,8 @@ spring:
       port: 6379
 
 logging:
-  charset:
-    file: UTF-8
-  file:
-    name: "${user.dir}/logs/sso-gateway.log"
   level:
     root: info
     "org.springframework.security": debug
-    "org.springframework.cloud.gateway": info
+    "org.springframework.cloud.gateway": debug
     "org.springframework.web": info
-    "org.springframework.data.redis": debug
-    "org.springframework.session.redis": debug

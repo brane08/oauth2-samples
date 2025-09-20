@@ -21,14 +21,4 @@ public class Client1SecurityConfig {
 				.oauth2ResourceServer(ors -> ors.jwt(Customizer.withDefaults()));
 		return http.build();
 	}
-
-	@Bean
-	public WebMvcConfigurer webMvcConfigurer() {
-		return new WebMvcConfigurer() {
-			@Override
-			public void configureDefaultServletHandling(DefaultServletHandlerConfigurer configurer) {
-				configurer.enable();
-			}
-		};
-	}
 }
