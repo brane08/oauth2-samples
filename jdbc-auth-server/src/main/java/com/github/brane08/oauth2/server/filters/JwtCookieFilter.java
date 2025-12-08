@@ -94,17 +94,4 @@ public class JwtCookieFilter extends OncePerRequestFilter {
 		}
 		return null;
 	}
-
-	private Collection<GrantedAuthority> extractAuthorities(Jwt jwt) {
-		Object rolesClaim = jwt.getClaims().get("roles");
-		if (rolesClaim instanceof List<?>) {
-			return ((List<?>) rolesClaim).stream()
-					.map(Object::toString)
-					.map(r -> new SimpleGrantedAuthority("ROLE_" + r))
-					.collect(Collectors.toList());
-		} else if (rolesClaim instanceof String roleString) {
-			return List.of(new SimpleGrantedAuthority("ROLE_" + roleString));
-		}
-		return Collections.emptyList();
-	}
 }

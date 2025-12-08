@@ -39,12 +39,14 @@ public class JwtCookieFilter extends OncePerRequestFilter {
 	private JwtDecoder jwtDecoder;
 	private final UserDetailsService delegate;
 	private final RequestMatcher appliesTo;
-	private final SecurityContextRepository contextRepo = new HttpSessionSecurityContextRepository();
+	private final SecurityContextRepository contextRepository;
 	private final AuthenticationSuccessHandler successHandler;
 
-	public JwtCookieFilter(UserDetailsService delegate, AuthenticationSuccessHandler successHandler) {
+	public JwtCookieFilter(UserDetailsService delegate, SecurityContextRepository contextRepository,
+						   AuthenticationSuccessHandler successHandler) {
 		this.delegate = delegate;
 		this.successHandler = successHandler;
+		this.contextRepository = contextRepository;
 		this.appliesTo = new OrRequestMatcher(
 				PathPatternRequestMatcher.withDefaults().matcher("/login"),
 				PathPatternRequestMatcher.withDefaults().matcher("/oauth/authorize")
@@ -74,7 +76,7 @@ public class JwtCookieFilter extends OncePerRequestFilter {
 				SecurityContextHolder.setContext(context);
 
 				// persist to HTTP session so subsequent requests remain authenticated
-				contextRepo.saveContext(context, request, response);
+				contextRepository.saveContext(context, request, response);
 
 				logger.debug("Cookie pre-auth succeeded for '{}'", username);
 				successHandler.onAuthenticationSuccess(request, response, auth);
@@ -96,27 +98,5 @@ public class JwtCookieFilter extends OncePerRequestFilter {
 			}
 		}
 		return null;
-	}
-
-	private Collection<GrantedAuthority> extractAuthorities(Jwt jwt) {
-		Object rolesClaim = jwt.getClaims().get("roles");
-		if (rolesClaim instanceof List<?>) {
-			return ((List<?>) rolesClaim).stream()
-					.map(Object::toString)
-					.map(r -> new SimpleGrantedAuthority("ROLE_" + r))
-					.collect(Collectors.toList());
-		} else if (rolesClaim instanceof String roleString) {
-			return List.of(new SimpleGrantedAuthority("ROLE_" + roleString));
-		}
-		return Collections.emptyList();
-	}
-
-	JwtDecoder jwtDecoder() {
-		if (this.jwtDecoder == null) {
-			this.jwtDecoder = NimbusJwtDecoder.withSecretKey(
-					new SecretKeySpec(SECRET_KEY.getBytes(), "HmacSHA256")
-			).build();
-		}
-		return this.jwtDecoder;
 	}
 }

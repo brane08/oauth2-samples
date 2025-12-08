@@ -6,10 +6,6 @@ server:
     key-store-password: "changeit"
     key-alias: "sas"
     enabled: false
-  error:
-    include-exception: true
-    include-stacktrace: always
-    include-message: always
   forward-headers-strategy: framework
   servlet:
     session:
@@ -37,6 +33,11 @@ spring:
     redis:
       host: localhost
       port: 6379
+  web:
+    error:
+      include-exception: true
+      include-stacktrace: always
+      include-message: always
 
 logging:
   level:
