@@ -1,8 +1,8 @@
 package com.github.brane08.oauth2.server.service;
 
-import com.fasterxml.jackson.core.JacksonException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 import com.github.brane08.oauth2.server.domain.CustomAuthorization;
 import com.github.brane08.oauth2.server.repository.CustomAuthorizationRepository;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -38,9 +38,9 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
     private final CustomAuthorizationRepository authorizationRepository;
     private final RegisteredClientRepository registeredClientRepository;
     private final JdbcAggregateTemplate aggregateTemplate;
-    private final ObjectMapper securityObjectMapper;
+    private final JsonMapper securityObjectMapper;
 
-    public JdbcOAuth2AuthorizationService(@Qualifier("securityObjectMapper") ObjectMapper securityObjectMapper,
+    public JdbcOAuth2AuthorizationService(@Qualifier("securityObjectMapper") JsonMapper securityObjectMapper,
                                           CustomAuthorizationRepository authorizationRepository,
                                           RegisteredClientRepository registeredClientRepository,
                                           JdbcAggregateTemplate aggregateTemplate) {

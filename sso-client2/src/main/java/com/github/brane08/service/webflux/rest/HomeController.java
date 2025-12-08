@@ -1,18 +1,18 @@
 package com.github.brane08.service.webflux.rest;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 @RestController
 @RequestMapping("/api")
 public class HomeController {
 
-	private final ObjectMapper jsonMapper;
+	private final JsonMapper jsonMapper;
 
-	public HomeController(ObjectMapper jsonMapper) {
+	public HomeController(JsonMapper jsonMapper) {
 		this.jsonMapper = jsonMapper;
 	}
 

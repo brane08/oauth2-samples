@@ -1,7 +1,5 @@
 package com.github.brane08.oauth2.server.config;
 
-import com.fasterxml.jackson.databind.Module;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.brane08.oauth2.server.filters.JwtCookieFilter;
 import com.github.brane08.oauth2.server.repository.AppUserRepository;
 import com.github.brane08.oauth2.server.service.CookieAwareUserDetailsService;
@@ -18,26 +16,24 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.RequestCacheConfigurer;
+import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
+import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.jackson2.SecurityJackson2Modules;
-import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
+import org.springframework.security.jackson.SecurityJacksonModules;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
-import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
-import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
-import org.springframework.security.oauth2.server.authorization.jackson2.OAuth2AuthorizationServerJackson2Module;
+import org.springframework.security.oauth2.server.authorization.jackson.OAuth2AuthorizationServerJacksonModule;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
@@ -48,15 +44,14 @@ import org.springframework.security.web.authentication.SavedRequestAwareAuthenti
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.security.web.savedrequest.RequestCache;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 
 @Configuration(proxyBeanMethods = false)
@@ -72,9 +67,11 @@ public class JdbcAuthServerConfig {
 	@Bean
 	@Order(Ordered.HIGHEST_PRECEDENCE)
 	public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http,
-																	  SecurityContextRepository contextRepository) throws Exception {
+																	  SecurityContextRepository contextRepository,
+																	  RequestCache requestCache,
+																	  JwtCookieFilter cookieFilter) {
 		OAuth2AuthorizationServerConfigurer authorizationServerConfigurer =
-				OAuth2AuthorizationServerConfigurer.authorizationServer();
+				new OAuth2AuthorizationServerConfigurer();
 
 		// @formatter:off
 		http
@@ -90,13 +87,14 @@ public class JdbcAuthServerConfig {
 				.requestMatchers("/.well-known/**", "/error").permitAll()
 				.anyRequest().authenticated()
 			)
-			.requestCache(RequestCacheConfigurer::disable)
+			.requestCache(c -> c.requestCache(requestCache))
 			.exceptionHandling((exceptions) -> exceptions
 				.defaultAuthenticationEntryPointFor(
 					new LoginUrlAuthenticationEntryPoint("/login"),
 					new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
 				)
 			);
+		http.addFilterBefore(cookieFilter, UsernamePasswordAuthenticationFilter.class);
 		// @formatter:on
 		return http.build();
 	}
@@ -106,7 +104,8 @@ public class JdbcAuthServerConfig {
 	@Order(Ordered.HIGHEST_PRECEDENCE + 1)
 	public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http,
 														  SecurityContextRepository contextRepository,
-														  JwtCookieFilter cookieFilter) throws Exception {
+														  RequestCache requestCache,
+														  JwtCookieFilter cookieFilter) {
 		// @formatter:off
 		http
 			.authorizeHttpRequests((authorize) -> authorize
@@ -115,6 +114,7 @@ public class JdbcAuthServerConfig {
 			)
 			.formLogin(Customizer.withDefaults())
 			.securityContext(sc -> sc.securityContextRepository(contextRepository))
+			.requestCache(c -> c.requestCache(requestCache))
 			.addFilterBefore(cookieFilter, UsernamePasswordAuthenticationFilter.class);
 		// @formatter:on
 		return http.build();
@@ -177,10 +177,11 @@ public class JdbcAuthServerConfig {
 	}
 
 	@Bean
-	AuthenticationSuccessHandler authenticationSuccessHandler() {
+	AuthenticationSuccessHandler authenticationSuccessHandler(RequestCache requestCache) {
 		var successHandler = new SavedRequestAwareAuthenticationSuccessHandler();
 		successHandler.setDefaultTargetUrl("/");
 		successHandler.setAlwaysUseDefaultTargetUrl(false);
+		successHandler.setRequestCache(requestCache);
 		return successHandler;
 	}
 
@@ -190,23 +191,27 @@ public class JdbcAuthServerConfig {
 	}
 
 	@Bean
+	RequestCache requestCache() {
+		return new SkipUrlHttpRequestCache();
+	}
+
+	@Bean
 	JwtCookieFilter cookieFilter(UserDetailsService userDetailsService, SecurityContextRepository contextRepository,
 								 AuthenticationSuccessHandler successHandler) {
 		return new JwtCookieFilter(userDetailsService, contextRepository, successHandler);
 	}
 
 	@Bean("securityObjectMapper")
-	public ObjectMapper securityObjectMapper() {
-		ObjectMapper objectMapper = new ObjectMapper();
+	public JsonMapper securityObjectMapper() {
 		ClassLoader classLoader = JdbcAuthServerConfig.class.getClassLoader();
-		List<Module> securityModules = SecurityJackson2Modules.getModules(classLoader);
-		objectMapper.registerModules(securityModules);
-		objectMapper.registerModule(new OAuth2AuthorizationServerJackson2Module());
-		return objectMapper;
+		return JsonMapper.builder()
+				.addModules(SecurityJacksonModules.getModules(classLoader))
+				.addModules(new OAuth2AuthorizationServerJacksonModule())
+				.build();
 	}
 
 	@Bean
-	public RedisSerializer<Object> springSessionDefaultRedisSerializer(@Qualifier("securityObjectMapper") ObjectMapper securityObjectMapper) {
-		return new GenericJackson2JsonRedisSerializer(securityObjectMapper);
+	public RedisSerializer<Object> springSessionDefaultRedisSerializer(@Qualifier("securityObjectMapper") JsonMapper securityObjectMapper) {
+		return new GenericJacksonJsonRedisSerializer(securityObjectMapper);
 	}
 }
