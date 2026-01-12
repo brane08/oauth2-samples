@@ -9,7 +9,7 @@ public class SsoGatewayApplication {
 	static {
 		System.setProperty("com.sun.net.ssl.checkRevocation", "false");
 		System.setProperty("jdk.internal.httpclient.disableHostnameVerification", "true");
-		System.setProperty("javax.net.debug", "all");
+//		System.setProperty("javax.net.debug", "all");
 	}
 
 	public static void main(String[] args) {

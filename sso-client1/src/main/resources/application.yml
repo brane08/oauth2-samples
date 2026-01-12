@@ -24,7 +24,10 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: "http://localhost:8077"
+          issuer-uri: "https://auth.example.com:8077"
+  web:
+    resources:
+      static-locations: /Users/bhushanr/incubator/samples/oauth2-samples/.ui-client1/dist/.ui-client1/browser, classpath:/static/
 logging:
   level:
     root: info

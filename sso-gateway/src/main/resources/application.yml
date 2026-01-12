@@ -1,14 +1,14 @@
 server:
+  address: 127.0.0.1
   port: 8078
   ssl:
     key-store-type: PKCS12
-    key-store: "${user.dir}/../certs/client.p12"
+    key-store: "${user.dir}/../certs/services.p12"
     key-store-password: "changeit"
-    key-alias: "client"
     trust-store-type: JKS
     trust-store: "${user.dir}/../certs/truststore.jks"
     trust-store-password: "changeit"
-    enabled: false
+    enabled: true
   forward-headers-strategy: framework
 
 spring:
@@ -46,9 +46,10 @@ spring:
 #            jwk-set-uri: "http://localhost:8079/uaa/oauth2/jwks"
           static-oidc:
             #            issuer-uri: "http://localhost:8077"
-            authorization-uri: "http://localhost:8077/oauth2/authorize"
-            token-uri: "http://localhost:8077/oauth2/token"
-            jwk-set-uri: "http://localhost:8077/oauth2/jwks"
+            authorization-uri: "https://auth.example.com:8077/oauth2/authorize"
+            token-uri: "https://auth.example.com:8077/oauth2/token"
+            jwk-set-uri: "https://auth.example.com:8077/oauth2/jwks"
+            ssl-trust-all: true
   cloud:
     gateway:
       server:
@@ -79,7 +80,6 @@ spring:
           httpclient:
             connect-timeout: 15000
             response-timeout: 60000
-            wiretap: true
             pool:
               metrics: true
   session:
@@ -102,4 +102,5 @@ logging:
     root: info
     "org.springframework.security": debug
     "org.springframework.cloud.gateway": debug
+    "org.springframework.security.oauth2.core.OAuth2TokenValidator": debug
     "org.springframework.web": info
