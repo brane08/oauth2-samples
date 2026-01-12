@@ -1,7 +1,8 @@
 package com.github.brane08.oauth2.server.config;
 
-import com.github.brane08.oauth2.server.filters.JwtCookieFilter;
+import com.github.brane08.oauth2.server.filters.SsoCookieAuthenticationFilter;
 import com.github.brane08.oauth2.server.services.CookieAwareUserDetailsService;
+import com.github.brane08.oauth2.server.web.SsoAuthenticationProvider;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
@@ -15,14 +16,15 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
-import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
@@ -43,14 +45,13 @@ import org.springframework.security.oauth2.server.authorization.token.JwtEncodin
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.authentication.NoOpAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.savedrequest.RequestCache;
-import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.security.KeyPair;
@@ -77,7 +78,8 @@ public class StaticAuthServerConfig {
 	public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http,
 																	  SecurityContextRepository contextRepository,
 																	  RequestCache requestCache,
-																	  JwtCookieFilter cookieFilter) {
+																	  SsoCookieAuthenticationFilter cookieFilter,
+																	  SsoAuthenticationProvider ssoAuthProvider) {
 		final OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
 		// @formatter:off
 		http
@@ -87,20 +89,22 @@ public class StaticAuthServerConfig {
 				.tokenRevocationEndpoint(Customizer.withDefaults())
 				.tokenIntrospectionEndpoint(Customizer.withDefaults())
 			)
-			.csrf(csrf -> csrf.ignoringRequestMatchers(authorizationServerConfigurer.getEndpointsMatcher()))
+			.csrf(AbstractHttpConfigurer::disable)
+			.sessionManagement(sm -> sm
+				.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
 			.securityContext(sc -> sc.securityContextRepository(contextRepository))
 			.requestCache(c -> c.requestCache(requestCache))
 			.authorizeHttpRequests((authorize) -> authorize
-				.requestMatchers("/.well-known/**", "/error").permitAll()
+				.requestMatchers("/.well-known/**", "/error","/actuator/**", "/assets/**", "/favicon.ico", "/css/**", "/js/**").permitAll()
 				.anyRequest().authenticated()
 			)
+			.authenticationProvider(ssoAuthProvider)
 			.exceptionHandling((exceptions) -> exceptions
-				.defaultAuthenticationEntryPointFor(
-					new LoginUrlAuthenticationEntryPoint("/login"),
-					new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
-				)
-			);
-		http.addFilterBefore(cookieFilter, UsernamePasswordAuthenticationFilter.class);
+				.authenticationEntryPoint(new NoOpAuthenticationEntryPoint())
+			)
+			.formLogin(AbstractHttpConfigurer::disable)
+			.httpBasic(AbstractHttpConfigurer::disable);
+		http.addFilterAfter(cookieFilter, AnonymousAuthenticationFilter.class);
 		// @formatter:on
 		return http.build();
 	}
@@ -110,19 +114,22 @@ public class StaticAuthServerConfig {
 	public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http,
 														  SecurityContextRepository contextRepository,
 														  RequestCache requestCache,
-														  JwtCookieFilter cookieFilter) {
+														  SsoCookieAuthenticationFilter cookieFilter,
+														  SsoAuthenticationProvider ssoAuthProvider) {
 		// @formatter:off
 		http
+			.csrf(AbstractHttpConfigurer::disable)
+			.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
 			.authorizeHttpRequests((authorize) -> authorize
-				.requestMatchers("/.well-known/**", "/error","/login", "/css/**", "/js/**").permitAll()
+				.requestMatchers("/.well-known/**", "/error","/actuator/**", "/assets/**", "/favicon.ico", "/css/**", "/js/**").permitAll()
 				.anyRequest().authenticated()
 			)
-			.formLogin(form -> form
-				.loginPage("/login").loginProcessingUrl("/login").permitAll()
-			)
+			.formLogin(AbstractHttpConfigurer::disable)
+			.httpBasic(AbstractHttpConfigurer::disable)
+			.authenticationProvider(ssoAuthProvider)
 			.securityContext(sc -> sc.securityContextRepository(contextRepository))
 			.requestCache(c -> c.requestCache(requestCache));
-		http.addFilterBefore(cookieFilter, UsernamePasswordAuthenticationFilter.class);
+		http.addFilterAfter(cookieFilter, AnonymousAuthenticationFilter.class);
 		// @formatter:on
 		return http.build();
 	}
@@ -132,10 +139,13 @@ public class StaticAuthServerConfig {
 		RegisteredClient oidcClient = RegisteredClient.withId(UUID.randomUUID().toString())
 				.clientId("8d0342a6-d045-434a-a5a3-2ad4976a07aa")
 				.clientSecret("{noop}secret")
-				.redirectUri("http://localhost:8078/login/oauth2/code/static-oidc")
-				.redirectUri("http://localhost:8078/oauth2/code/static-oidc")
-				.redirectUri("http://localhost:8078/authorized")
-				.postLogoutRedirectUri("http://localhost:8078/logout")
+				.redirectUri("https://gateway.example.com:8078/login/oauth2/code/static-oidc")
+				.redirectUri("https://gateway.example.com:8078/oauth2/code/static-oidc")
+				.redirectUri("https://gateway.example.com:8078/authorized")
+				.redirectUri("https://sso.example.com:8040/login/oauth2/code/static-oidc")
+				.redirectUri("https://sso.example.com:8040/oauth2/code/static-oidc")
+				.redirectUri("https://sso.example.com:8040/authorized")
+				.postLogoutRedirectUri("https://sso.example.com:8040/logout")
 				.scope(OidcScopes.OPENID)
 				.scope(OidcScopes.PROFILE)
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
@@ -227,9 +237,11 @@ public class StaticAuthServerConfig {
 	}
 
 	@Bean
-	JwtCookieFilter cookieFilter(UserDetailsService userDetailsService, SecurityContextRepository contextRepository,
-								 AuthenticationSuccessHandler successHandler) {
-		return new JwtCookieFilter(userDetailsService, contextRepository, successHandler);
+	SsoCookieAuthenticationFilter cookieFilter(AuthenticationManager authenticationManager,
+											   SecurityContextRepository contextRepository,
+											   AuthenticationSuccessHandler successHandler,
+											   RequestCache requestCache) {
+		return new SsoCookieAuthenticationFilter(authenticationManager, contextRepository, successHandler, requestCache);
 	}
 
 	@Bean

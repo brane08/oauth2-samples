@@ -1,0 +1,42 @@
+<VirtualHost *:8040>
+    ServerName sso.example.com
+
+    SSLEngine on
+    SSLCertificateFile /Users/bhushanr/incubator/samples/oauth2-samples/certs/services.crt
+    SSLCertificateKeyFile /Users/bhushanr/incubator/samples/oauth2-samples/certs/services.key
+
+    SSLProxyEngine on
+    SSLProxyVerify none
+    SSLProxyCheckPeerName off
+    SSLProxyCheckPeerCN off
+
+    # Optional but recommended during dev
+    SSLProxyCACertificateFile /Users/bhushanr/incubator/samples/oauth2-samples/certs/ca.pem
+
+    # ---- Logging ----
+    LogLevel debug
+    ErrorLog /usr/local/var/log/httpd/sso-error.log
+    CustomLog /usr/local/var/log/httpd/sso-access.log combined
+
+    # ---- Rewrite Engine ----
+    RewriteEngine On
+
+    # Always set dummy SSO cookie
+    RewriteCond %{HTTP_COOKIE} !SSO_TOKEN=
+    Header always set Set-Cookie "SSO_TOKEN=user1; Domain=.example.com; Path=/; HttpOnly; Secure; SameSite=None" early
+
+    # Optional identity headers
+    Header always set X-SSO-USER "user1"
+    Header always set X-SSO-ISSUER "dummy-httpd"
+
+    # Always redirect to gateway
+    ProxyPreserveHost On
+
+    ProxyPass /mvc https://gateway.example.com:8078/mvc
+    ProxyPassReverse /mvc https://gateway.example.com:8078/mvc
+    ProxyPass /webflux https://gateway.example.com:8078/webflux
+    ProxyPassReverse /webflux https://gateway.example.com:8078/webflux
+
+    ProxyPass / https://gateway.example.com:8078/
+    ProxyPassReverse / https://gateway.example.com:8078/
+</VirtualHost>

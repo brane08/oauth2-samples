@@ -1,11 +1,14 @@
 server:
+  address: 127.0.0.1
   port: 8077
   ssl:
     key-store-type: PKCS12
-    key-store: "${user.dir}/../certs/sas.p12"
+    key-store: "${user.dir}/../certs/services.p12"
     key-store-password: "changeit"
-    key-alias: "sas"
-    enabled: false
+    trust-store-type: JKS
+    trust-store: "${user.dir}/../certs/truststore.jks"
+    trust-store-password: "changeit"
+    enabled: true
   forward-headers-strategy: framework
   servlet:
     session:
@@ -42,8 +45,11 @@ spring:
 logging:
   level:
     root: info
+    "org.springframework.security": debug
     "org.springframework.security.web": debug
+    "org.springframework.security.web.savedrequest": debug
+#    "org.springframework.security.web.FilterChainProxy": trace
     "org.springframework.security.oauth2": debug
-    "com.github.brane08.oauth2.server": debug
     "org.springframework.data.redis": debug
     "org.springframework.session.redis": debug
+    "com.github.brane08.oauth2.server": debug
