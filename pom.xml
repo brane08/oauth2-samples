@@ -28,7 +28,6 @@
         <module>jdbc-auth-server</module>
         <module>static-auth-server</module>
         <module>sso-gateway</module>
-        <module>sso-gateway-mvc</module>
         <module>sso-client1</module>
         <module>sso-client2</module>
     </modules>

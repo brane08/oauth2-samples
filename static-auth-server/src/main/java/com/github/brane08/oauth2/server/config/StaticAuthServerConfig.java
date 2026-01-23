@@ -8,14 +8,17 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -44,6 +47,7 @@ import org.springframework.security.oauth2.server.authorization.settings.ClientS
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -52,6 +56,11 @@ import org.springframework.security.web.authentication.SavedRequestAwareAuthenti
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.savedrequest.RequestCache;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.security.KeyPair;
@@ -63,10 +72,21 @@ import java.time.Instant;
 import java.util.UUID;
 
 @EnableWebSecurity
-@Configuration(proxyBeanMethods = false)
+@Configuration
 public class StaticAuthServerConfig {
 
 	private static final Logger LOG = LoggerFactory.getLogger(StaticAuthServerConfig.class);
+
+	private final RequestMatcher staticResourcesMatcher;
+	private final RequestMatcher publicPathMatcher;
+	private final RequestMatcher oauth2ProtectedMatcher;
+
+	public StaticAuthServerConfig(RequestMatcher staticResourcesMatcher, RequestMatcher publicPathMatcher,
+								  RequestMatcher oauth2ProtectedMatcher) {
+		this.staticResourcesMatcher = staticResourcesMatcher;
+		this.publicPathMatcher = publicPathMatcher;
+		this.oauth2ProtectedMatcher = oauth2ProtectedMatcher;
+	}
 
 	@Bean
 	public PasswordEncoder passwordEncoder() {
@@ -95,7 +115,9 @@ public class StaticAuthServerConfig {
 			.securityContext(sc -> sc.securityContextRepository(contextRepository))
 			.requestCache(c -> c.requestCache(requestCache))
 			.authorizeHttpRequests((authorize) -> authorize
-				.requestMatchers("/.well-known/**", "/error","/actuator/**", "/assets/**", "/favicon.ico", "/css/**", "/js/**").permitAll()
+				.requestMatchers(staticResourcesMatcher).permitAll()
+				.requestMatchers(publicPathMatcher).permitAll()
+				.requestMatchers(PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.OPTIONS, "/**")).permitAll()
 				.anyRequest().authenticated()
 			)
 			.authenticationProvider(ssoAuthProvider)
@@ -121,7 +143,9 @@ public class StaticAuthServerConfig {
 			.csrf(AbstractHttpConfigurer::disable)
 			.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
 			.authorizeHttpRequests((authorize) -> authorize
-				.requestMatchers("/.well-known/**", "/error","/actuator/**", "/assets/**", "/favicon.ico", "/css/**", "/js/**").permitAll()
+				.requestMatchers(staticResourcesMatcher).permitAll()
+				.requestMatchers(publicPathMatcher).permitAll()
+				.requestMatchers(PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.OPTIONS, "/**")).permitAll()
 				.anyRequest().authenticated()
 			)
 			.formLogin(AbstractHttpConfigurer::disable)
@@ -240,12 +264,59 @@ public class StaticAuthServerConfig {
 	SsoCookieAuthenticationFilter cookieFilter(AuthenticationManager authenticationManager,
 											   SecurityContextRepository contextRepository,
 											   AuthenticationSuccessHandler successHandler,
-											   RequestCache requestCache) {
-		return new SsoCookieAuthenticationFilter(authenticationManager, contextRepository, successHandler, requestCache);
+											   RequestCache requestCache,
+											   @Value("${sas.gateway-url}") String gatewayBaseUrl) {
+		return new SsoCookieAuthenticationFilter(authenticationManager, contextRepository, successHandler, requestCache,
+				staticResourcesMatcher, publicPathMatcher, oauth2ProtectedMatcher, gatewayBaseUrl);
 	}
 
 	@Bean
 	public RedisSerializer<Object> springSessionDefaultRedisSerializer(JsonMapper mapper) {
 		return new GenericJacksonJsonRedisSerializer(mapper);
+	}
+
+	@Bean
+	public CorsConfigurationSource corsConfigurationSource() {
+		CorsConfiguration strictConfig = new CorsConfiguration();
+		strictConfig.addAllowedOriginPattern("https://*.example.com:8078");
+		strictConfig.addAllowedOriginPattern("http://*.example.com:8040");
+		strictConfig.setAllowCredentials(true);
+		strictConfig.addAllowedMethod("POST");
+		strictConfig.addAllowedMethod("GET");
+		strictConfig.addAllowedMethod("OPTIONS");
+		strictConfig.addAllowedMethod("HEAD");
+		strictConfig.addAllowedHeader("*");
+		strictConfig.setMaxAge(Duration.ofMinutes(30));
+		CorsConfiguration lenientConfig = new CorsConfiguration();
+		lenientConfig.addAllowedOriginPattern("*");
+		lenientConfig.setAllowCredentials(false);
+		lenientConfig.addAllowedMethod("GET");
+		lenientConfig.addAllowedMethod("HEAD");
+		lenientConfig.addAllowedMethod("OPTIONS");
+		lenientConfig.addAllowedHeader("*");
+		lenientConfig.setMaxAge(Duration.ofMinutes(60));
+		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+		source.registerCorsConfiguration("/oauth2/**", strictConfig);
+		source.registerCorsConfiguration("/userinfo", strictConfig);
+		source.registerCorsConfiguration("/**/*.js", lenientConfig);
+		source.registerCorsConfiguration("/**/*.css", lenientConfig);
+		source.registerCorsConfiguration("/**/*.wasm", lenientConfig);
+		source.registerCorsConfiguration("/**/*.map", lenientConfig);
+		source.registerCorsConfiguration("/assets/**", lenientConfig);
+		return source;
+	}
+
+	@Bean
+	public AuthenticationEntryPoint customAuthenticationEntryPoint(@Value("${sas.gateway-url}") String gatewayBaseUrl) {
+		return (request, response, authException) -> {
+			String accept = request.getHeader("Accept");
+			if (accept != null && accept.contains("text/html")) {
+				response.sendRedirect(gatewayBaseUrl + request.getRequestURI() + (request.getQueryString() != null ? "?" + request.getQueryString() : ""));
+			} else {
+				response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+				response.setContentType("application/json");
+				response.getWriter().write("{\"error\":\"unauthorized\",\"message\":\"Authentication required\"}");
+			}
+		};
 	}
 }

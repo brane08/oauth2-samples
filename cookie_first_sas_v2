@@ -1,0 +1,145 @@
+# CORS + OAuth2 + Gateway + Spring Authorization Server  
+## Architecture-Constrained Discussion Prompt
+
+This prompt describes a **fixed, non-negotiable architecture**.  
+All analysis **must stay within these constraints**.  
+Do **not simplify**, generalize, or replace components unless explicitly instructed.
+
+---
+
+## 1. Architecture Overview
+
+- **Angular SPA**
+  - Loads JS, CSS, WASM via the gateway
+  - Makes API calls using cookies
+- **Spring Cloud Gateway (WebFlux)**
+  - Browser boundary
+  - Hosts SPA assets
+  - Acts as OAuth2 **client** using `oauth2Login`
+- **Spring Authorization Server (Servlet-based)**
+  - Handles `/oauth2/authorize`, `/oauth2/token`
+  - Authenticates users via **external SSO cookie**
+  - Does **not** present login UI
+- **External SSO (Ping / httpd)**
+  - Injects headers
+  - Sets cookies
+- **Deployment**
+  - Services exposed via OpenShift routes
+  - Subpaths routed through gateway
+- **Traffic model**
+  - All browser traffic enters through the gateway
+  - SAS is reached by the browser **only via OAuth2 redirects**
+
+---
+
+## 2. Authentication Model (Fixed – Do Not Change)
+
+- **Cookie-first authentication**
+- SAS uses a **custom servlet filter** to authenticate
+- Filter responsibilities:
+  - Read SSO cookie
+  - Delegate to an `AuthenticationProvider`
+  - Create a fully authenticated `Authentication`
+  - Set `SecurityContext`
+- Explicit constraints:
+  - ❌ No `PreAuthenticatedAuthenticationToken`
+  - ❌ No form login
+  - ❌ No SAS login UI
+  - ✅ SAS returns **401**, not redirects, for APIs
+
+---
+
+## 3. Request Restoration (Critical – Do Not Remove)
+
+- SAS **must restore `/oauth2/authorize` after authentication**
+- Therefore, SAS **must have**:
+  - `RequestCache`
+  - `AuthenticationSuccessHandler`
+- Gateway **may** have its own RequestCache, but:
+  - This **does not replace** SAS RequestCache
+- Removing RequestCache from SAS **breaks first-hit OAuth flows**
+
+> **Rule:**  
+> If SAS authenticates users and resumes `/oauth2/authorize`, it **must keep its own RequestCache and SuccessHandler**.
+
+---
+
+## 4. CORS Model (Be Precise)
+
+- CORS is enforced by browsers on **scripted requests**:
+  - `fetch`
+  - XHR
+  - JS / WASM / CSS loading
+- OAuth2 redirects (`302`) are **top-level navigations**
+  - ❌ Not subject to CORS
+- CORS ownership:
+  - **Gateway** is the primary CORS boundary
+  - **SAS CORS**, if present, must be:
+    - Minimal
+    - Endpoint-scoped (e.g. `/oauth2/token`, `/userinfo`)
+    - ❌ Never global (`/**`)
+
+---
+
+## 5. Observed Issues to Explain
+
+- First-hit failures on gateway subpaths
+- Browser shows **“provisional headers”** during initial OAuth2 redirects
+- CSS / JS / WASM loaded as `text/html`
+- MIME-type errors followed by CORS messages
+- 401 responses on asset paths
+- Reload or cache-clear makes the issue disappear
+
+---
+
+## 6. Questions to Answer
+
+1. Why CORS errors appear even when the root cause is **redirect misuse**
+2. Why redirecting **asset or API requests** from SAS breaks SPA loading
+3. Correct placement of CORS:
+   - Gateway vs SAS
+4. Correct handling of:
+   - `OPTIONS`
+   - `HEAD`
+   - `PATCH`
+5. Proper use of:
+   - `allowedOrigins`
+   - `allowedOriginPatterns`
+6. Why `*` cannot be used with `allowCredentials=true`
+7. Why `RequestCache` **must remain in SAS**
+8. How to prevent first-hit failures **without breaking OAuth2**
+9. How WASM and strict MIME checks interact with redirects and headers
+
+---
+
+## 7. Hard Constraints (Must Be Respected)
+
+### Do NOT:
+- Remove `RequestCache` or `AuthenticationSuccessHandler` from SAS
+- Move all interactive logic into the gateway
+- Add form login to SAS
+- Add global CORS to SAS
+- Redirect non-HTML requests from SAS
+
+### Do:
+- Keep gateway as browser UX boundary
+- Keep SAS minimal but OAuth2-correct
+- Distinguish redirect bugs from real CORS issues
+- Ensure SAS authenticates using SSO cookie via custom filter
+- Ensure top-level HTML requests can recover via gateway redirect if cookie missing
+
+---
+
+## 8. Expected Output
+
+- Architecture-correct explanation (not generic OAuth advice)
+- Explicit statement of **why RequestCache is required in SAS**
+- Correct CORS ownership model
+- Explanation of observed browser behavior
+- Clear “do / don’t” rules
+- Optional code snippets that respect the above constraints
+
+---
+
+**Reminder:**  
+> If SAS participates in `/oauth2/authorize` and authenticates users, it must keep its own RequestCache. Any answer that removes it without changing the architecture is incorrect.

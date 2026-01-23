@@ -5,26 +5,33 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.jackson.SecurityJacksonModules;
 import org.springframework.security.oauth2.client.jackson.OAuth2ClientJacksonModule;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.RedirectServerAuthenticationSuccessHandler;
-import org.springframework.security.web.server.context.ServerSecurityContextRepository;
 import org.springframework.security.web.server.context.WebSessionServerSecurityContextRepository;
 import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository;
 import org.springframework.security.web.server.savedrequest.ServerRequestCache;
 import org.springframework.security.web.server.savedrequest.WebSessionServerRequestCache;
+import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher;
 import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers;
 import org.springframework.web.server.adapter.ForwardedHeaderTransformer;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.net.URI;
 
-@Configuration(proxyBeanMethods = false)
+@Configuration
 @EnableWebFluxSecurity
 public class ClientSecurityConfig {
+
+	private final ServerWebExchangeMatcher staticResourcesMatcher;
+
+	public ClientSecurityConfig(ServerWebExchangeMatcher staticResourcesMatcher) {
+		this.staticResourcesMatcher = staticResourcesMatcher;
+	}
 
 	@Bean
 	public SecurityWebFilterChain filterChain(ServerHttpSecurity http, ServerRequestCache requestCache) {
@@ -40,9 +47,9 @@ public class ClientSecurityConfig {
 			.securityContextRepository(contextRepo)
 			.requestCache(rc -> rc.requestCache(requestCache))
 			.authorizeExchange(ae -> ae
-				.pathMatchers("/actuator/**", "/assets/**", "/favicon.ico").permitAll()
-				.pathMatchers("/logout", "/oauth2/**").permitAll()
-				.pathMatchers("/about", "/home", "default.html").permitAll()
+				.pathMatchers("/actuator/**", "/logout", "/oauth2/**","/about", "/home", "default.html").permitAll()
+				.matchers(staticResourcesMatcher).permitAll()
+				.pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 				.anyExchange().authenticated())
 			.oauth2Login(o2l -> o2l.authenticationSuccessHandler(successHandler));
 		// @formatter:on
@@ -52,7 +59,7 @@ public class ClientSecurityConfig {
 	@Bean
 	public ServerRequestCache requestCache() {
 		var cache = new WebSessionServerRequestCache();
-		cache.setSaveRequestMatcher(ServerWebExchangeMatchers.pathMatchers("/oauth2/","/login/ouath2/"));
+		cache.setSaveRequestMatcher(ServerWebExchangeMatchers.pathMatchers("/oauth2/", "/login/ouath2/"));
 		return cache;
 	}
 

@@ -53,3 +53,5 @@ logging:
     "org.springframework.data.redis": debug
     "org.springframework.session.redis": debug
     "com.github.brane08.oauth2.server": debug
+sas:
+  gateway-url: https://gateway.example.com

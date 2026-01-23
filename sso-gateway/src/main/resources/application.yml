@@ -56,25 +56,17 @@ spring:
         webflux:
           routes:
             - id: auth-me
-              uri: http://localhost:8079
+              uri: https://localhost:8077
               predicates:
                 - Path=/uaa/**
-              filters:
-                - RewritePath=/uaa(?<segment>.*), /uaa/$\{segment}
             - id: client1
               uri: http://localhost:8081
               predicates:
                 - Path=/mvc/**
-              filters:
-                - RewritePath=/mvc(?<segment>.*), /mvc/$\{segment}
-                - RemoveRequestHeader=Cookie
             - id: client2
               uri: http://localhost:8082
               predicates:
                 - Path=/flux/**
-              filters:
-                - RewritePath=/flux(?<segment>.*), /flux/$\{segment}
-                - RemoveRequestHeader=Cookie
           default-filters:
             - TokenRelay=
           httpclient:
@@ -101,6 +93,6 @@ logging:
   level:
     root: info
     "org.springframework.security": debug
-    "org.springframework.cloud.gateway": debug
+    "org.springframework.cloud.gateway": info
     "org.springframework.security.oauth2.core.OAuth2TokenValidator": debug
     "org.springframework.web": info
