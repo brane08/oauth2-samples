@@ -1,5 +1,6 @@
 package com.github.brane08.oauth2.server.service;
 
+import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
@@ -80,7 +81,7 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
 
         Optional<CustomAuthorization> result;
         if (tokenType == null) {
-            result = this.authorizationRepository.findByStateOrAuthorizationCodeValueOrAccessTokenValueOrRefreshTokenValue(token);
+            result = this.authorizationRepository.findByStateOrAuthorizationCodeValueOrAccessTokenValueOrRefreshTokenValueOrOidcIdTokenValueOrUserCodeValueOrDeviceCodeValue(token);
         } else if (OAuth2ParameterNames.STATE.equals(tokenType.getValue())) {
             result = this.authorizationRepository.findByState(token);
         } else if (OAuth2ParameterNames.CODE.equals(tokenType.getValue())) {
@@ -89,6 +90,12 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
             result = this.authorizationRepository.findByAccessTokenValue(token);
         } else if (OAuth2ParameterNames.REFRESH_TOKEN.equals(tokenType.getValue())) {
             result = this.authorizationRepository.findByRefreshTokenValue(token);
+        } else if (OidcParameterNames.ID_TOKEN.equals(tokenType.getValue())) {
+            result = this.authorizationRepository.findByOidcIdTokenValue(token);
+        } else if (OAuth2ParameterNames.USER_CODE.equals(tokenType.getValue())) {
+            result = this.authorizationRepository.findByUserCodeValue(token);
+        } else if (OAuth2ParameterNames.DEVICE_CODE.equals(tokenType.getValue())) {
+            result = this.authorizationRepository.findByDeviceCodeValue(token);
         } else {
             result = Optional.empty();
         }

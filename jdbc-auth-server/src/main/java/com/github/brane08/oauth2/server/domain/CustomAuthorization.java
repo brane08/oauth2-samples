@@ -64,6 +64,24 @@ public class CustomAuthorization {
     @Column("oidc_id_token_claims")
     private String oidcIdTokenClaims;
 
+    @Column("user_code_value")
+    private String userCodeValue;
+    @Column("user_code_issued_at")
+    private Instant userCodeIssuedAt;
+    @Column("user_code_expires_at")
+    private Instant userCodeExpiresAt;
+    @Column("user_code_metadata")
+    private String userCodeMetadata;
+
+    @Column("device_code_value")
+    private String deviceCodeValue;
+    @Column("device_code_issued_at")
+    private Instant deviceCodeIssuedAt;
+    @Column("device_code_expires_at")
+    private Instant deviceCodeExpiresAt;
+    @Column("device_code_metadata")
+    private String deviceCodeMetadata;
+
     public String getId() {
         return id;
     }
@@ -272,4 +290,67 @@ public class CustomAuthorization {
         this.oidcIdTokenClaims = idTokenClaims;
     }
 
+    public String getUserCodeValue() {
+        return userCodeValue;
+    }
+
+    public void setUserCodeValue(String userCodeValue) {
+        this.userCodeValue = userCodeValue;
+    }
+
+    public Instant getUserCodeIssuedAt() {
+        return userCodeIssuedAt;
+    }
+
+    public void setUserCodeIssuedAt(Instant userCodeIssuedAt) {
+        this.userCodeIssuedAt = userCodeIssuedAt;
+    }
+
+    public Instant getUserCodeExpiresAt() {
+        return userCodeExpiresAt;
+    }
+
+    public void setUserCodeExpiresAt(Instant userCodeExpiresAt) {
+        this.userCodeExpiresAt = userCodeExpiresAt;
+    }
+
+    public String getUserCodeMetadata() {
+        return userCodeMetadata;
+    }
+
+    public void setUserCodeMetadata(String userCodeMetadata) {
+        this.userCodeMetadata = userCodeMetadata;
+    }
+
+    public String getDeviceCodeValue() {
+        return deviceCodeValue;
+    }
+
+    public void setDeviceCodeValue(String deviceCodeValue) {
+        this.deviceCodeValue = deviceCodeValue;
+    }
+
+    public Instant getDeviceCodeIssuedAt() {
+        return deviceCodeIssuedAt;
+    }
+
+    public void setDeviceCodeIssuedAt(Instant deviceCodeIssuedAt) {
+        this.deviceCodeIssuedAt = deviceCodeIssuedAt;
+    }
+
+    public Instant getDeviceCodeExpiresAt() {
+        return deviceCodeExpiresAt;
+    }
+
+    public void setDeviceCodeExpiresAt(Instant deviceCodeExpiresAt) {
+        this.deviceCodeExpiresAt = deviceCodeExpiresAt;
+    }
+
+    public String getDeviceCodeMetadata() {
+        return deviceCodeMetadata;
+    }
+
+    public void setDeviceCodeMetadata(String deviceCodeMetadata) {
+        this.deviceCodeMetadata = deviceCodeMetadata;
+    }
 }

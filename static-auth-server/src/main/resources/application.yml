@@ -9,7 +9,6 @@ server:
     trust-store: "${user.dir}/../certs/truststore.jks"
     trust-store-password: "changeit"
     enabled: true
-  forward-headers-strategy: framework
   servlet:
     session:
       timeout: 30m
