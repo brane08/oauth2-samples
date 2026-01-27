@@ -3,7 +3,10 @@ package com.github.brane08.oauth2.sso.web;
 import org.springframework.http.HttpCookie;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
@@ -13,6 +16,8 @@ import java.time.Duration;
 
 public class SsoCookieTransformationFilter implements WebFilter {
 
+	private static final Authentication ANONYMOUS_FALLBACK =
+			new AnonymousAuthenticationToken("sso-filter", "anonymous", AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
 	private static final String ORIGINAL_SSO_COOKIE = "SSO_TOKEN";
 	private static final String GATEWAY_SSO_COOKIE = "GATEWAY_SSO";
 	private static final String SSO_USERNAME_HEADER = "X-SSO-Username";
@@ -26,8 +31,8 @@ public class SsoCookieTransformationFilter implements WebFilter {
 		exchange.getAttributes().put("sso_cookie_processed", true);
 
 		return ReactiveSecurityContextHolder.getContext()
-				.switchIfEmpty(Mono.just(null))
-				.map(ctx -> ctx != null ? ctx.getAuthentication() : null)
+				.mapNotNull(SecurityContext::getAuthentication)
+				.defaultIfEmpty(ANONYMOUS_FALLBACK)
 				.flatMap(auth -> {
 					if (auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)) {
 						return chain.filter(exchange);

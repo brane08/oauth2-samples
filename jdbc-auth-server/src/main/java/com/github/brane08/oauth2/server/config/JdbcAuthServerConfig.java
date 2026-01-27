@@ -110,7 +110,7 @@ public class JdbcAuthServerConfig {
 				.authorizeHttpRequests((authorize) -> authorize
 						.requestMatchers(staticResourcesMatcher).permitAll()
 						.requestMatchers(publicPathMatcher).permitAll()
-						.requestMatchers(PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.OPTIONS, "/**")).permitAll()
+						.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 						.anyRequest().authenticated()
 				)
 				.authenticationProvider(ssoAuthProvider)
@@ -138,7 +138,7 @@ public class JdbcAuthServerConfig {
 				.authorizeHttpRequests((authorize) -> authorize
 						.requestMatchers(staticResourcesMatcher).permitAll()
 						.requestMatchers(publicPathMatcher).permitAll()
-						.requestMatchers(PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.OPTIONS, "/**")).permitAll()
+						.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 						.anyRequest().authenticated()
 				)
 				.formLogin(AbstractHttpConfigurer::disable)

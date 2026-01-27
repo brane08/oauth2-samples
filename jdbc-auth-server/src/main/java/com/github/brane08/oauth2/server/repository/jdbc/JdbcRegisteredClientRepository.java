@@ -59,8 +59,8 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
 			return;
 		}
 
-		TokenSettings tokenSettings = TokenSettings.builder().accessTokenTimeToLive(Duration.ofDays(1L))
-				.authorizationCodeTimeToLive(Duration.ofMinutes(10L)).refreshTokenTimeToLive(Duration.ofDays(30L))
+		TokenSettings tokenSettings = TokenSettings.builder().accessTokenTimeToLive(Duration.ofHours(4))
+				.authorizationCodeTimeToLive(Duration.ofMinutes(10L)).refreshTokenTimeToLive(Duration.ofDays(1))
 				.build();
 		RegisteredClient registeredClient = RegisteredClient.withId(DEFAULT_CLIENT_ID)
 				.clientId(DEFAULT_CLIENT_ID)
@@ -72,19 +72,23 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
 				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+				.redirectUri("https://gateway.example.com:8078/login/oauth2/code/static-oidc")
+				.redirectUri("https://gateway.example.com:8078/oauth2/code/static-oidc")
+				.redirectUri("https://gateway.example.com:8078/authorized")
+				.redirectUri("https://sso.example.com:8040/login/oauth2/code/static-oidc")
+				.redirectUri("https://sso.example.com:8040/oauth2/code/static-oidc")
+				.redirectUri("https://sso.example.com:8040/authorized")
 				.redirectUri("http://localhost:8078/login/oauth2/code/client-oidc")
 				.redirectUri("http://localhost:8078/oauth2/code/client-oidc")
 				.redirectUri("http://localhost:8078/callback")
 				.redirectUri("http://localhost:8078/authorized")
-				.redirectUri("http://localhost:8078/")
 				.redirectUri("http://localhost:8077/login/oauth2/code/client-oidc")
 				.redirectUri("http://localhost:8077/oauth2/code/client-oidc")
 				.redirectUri("http://localhost:8077/callback")
 				.redirectUri("http://localhost:8077/authorized")
-				.redirectUri("http://localhost:8077/")
+				.postLogoutRedirectUri("https://sso.example.com:8040/logout")
 				.scope(OidcScopes.OPENID)
 				.scope(OidcScopes.PROFILE)
-				.scope(OidcScopes.EMAIL)
 				.tokenSettings(tokenSettings)
 				.clientSettings(ClientSettings.builder().requireAuthorizationConsent(false).build())
 				.build();

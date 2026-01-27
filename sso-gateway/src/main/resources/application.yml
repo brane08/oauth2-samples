@@ -30,7 +30,7 @@ spring:
 #              - profile
 #              - openid
           static-oidc:
-            client-id: 8d0342a6-d045-434a-a5a3-2ad4976a07aa
+            client-id: "2e8347f2-ccac-4d03-bc2c-cc733ec4da10"
             client-secret: "secret"
             client-authentication-method: client_secret_basic
             authorization-grant-type: authorization_code
@@ -92,7 +92,7 @@ spring:
 logging:
   level:
     root: info
-    "org.springframework.security": debug
+    "org.springframework.security": info
     "org.springframework.cloud.gateway": info
     "org.springframework.security.oauth2.core.OAuth2TokenValidator": debug
     "org.springframework.web": info

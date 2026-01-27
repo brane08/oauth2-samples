@@ -44,6 +44,7 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
+import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
@@ -76,6 +77,7 @@ import java.util.UUID;
 public class StaticAuthServerConfig {
 
 	private static final Logger LOG = LoggerFactory.getLogger(StaticAuthServerConfig.class);
+	private static final String DEFAULT_CLIENT_ID = "2e8347f2-ccac-4d03-bc2c-cc733ec4da10";
 
 	private final RequestMatcher staticResourcesMatcher;
 	private final RequestMatcher publicPathMatcher;
@@ -160,8 +162,12 @@ public class StaticAuthServerConfig {
 
 	@Bean
 	public RegisteredClientRepository registeredClientRepository() {
-		RegisteredClient oidcClient = RegisteredClient.withId(UUID.randomUUID().toString())
-				.clientId("8d0342a6-d045-434a-a5a3-2ad4976a07aa")
+		TokenSettings tokenSettings = TokenSettings.builder().accessTokenTimeToLive(Duration.ofDays(1L))
+				.authorizationCodeTimeToLive(Duration.ofMinutes(10L)).refreshTokenTimeToLive(Duration.ofDays(30L))
+				.build();
+		RegisteredClient oidcClient = RegisteredClient.withId(DEFAULT_CLIENT_ID)
+				.clientId(DEFAULT_CLIENT_ID)
+				.clientName("custom-sso-client")
 				.clientSecret("{noop}secret")
 				.redirectUri("https://gateway.example.com:8078/login/oauth2/code/static-oidc")
 				.redirectUri("https://gateway.example.com:8078/oauth2/code/static-oidc")
@@ -169,12 +175,21 @@ public class StaticAuthServerConfig {
 				.redirectUri("https://sso.example.com:8040/login/oauth2/code/static-oidc")
 				.redirectUri("https://sso.example.com:8040/oauth2/code/static-oidc")
 				.redirectUri("https://sso.example.com:8040/authorized")
+				.redirectUri("http://localhost:8078/login/oauth2/code/client-oidc")
+				.redirectUri("http://localhost:8078/oauth2/code/client-oidc")
+				.redirectUri("http://localhost:8078/callback")
+				.redirectUri("http://localhost:8078/authorized")
+				.redirectUri("http://localhost:8077/login/oauth2/code/client-oidc")
+				.redirectUri("http://localhost:8077/oauth2/code/client-oidc")
+				.redirectUri("http://localhost:8077/callback")
+				.redirectUri("http://localhost:8077/authorized")
 				.postLogoutRedirectUri("https://sso.example.com:8040/logout")
 				.scope(OidcScopes.OPENID)
 				.scope(OidcScopes.PROFILE)
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
 				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+				.tokenSettings(tokenSettings)
 				.clientSettings(ClientSettings.builder().requireAuthorizationConsent(false).build())
 				.build();
 

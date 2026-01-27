@@ -7,11 +7,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.jackson.SecurityJacksonModules;
 import org.springframework.security.oauth2.client.jackson.OAuth2ClientJacksonModule;
+import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
+import org.springframework.security.oauth2.jwt.ReactiveJwtDecoders;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.RedirectServerAuthenticationSuccessHandler;
 import org.springframework.security.web.server.context.WebSessionServerSecurityContextRepository;
@@ -36,7 +39,8 @@ public class ClientSecurityConfig {
 	}
 
 	@Bean
-	public SecurityWebFilterChain filterChain(ServerHttpSecurity http, ServerRequestCache requestCache) {
+	public SecurityWebFilterChain filterChain(ServerHttpSecurity http, ServerRequestCache requestCache,
+											  ReactiveJwtDecoder jwtDecoder) {
 		var contextRepo = new WebSessionServerSecurityContextRepository();
 		var csrfRepo = CookieServerCsrfTokenRepository.withHttpOnlyFalse();
 		csrfRepo.setCookiePath("/");
@@ -54,7 +58,9 @@ public class ClientSecurityConfig {
 				.matchers(staticResourcesMatcher).permitAll()
 				.pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 				.anyExchange().authenticated())
-			.oauth2Login(o2l -> o2l.authenticationSuccessHandler(successHandler));
+			.oauth2Login(o2l -> o2l.authenticationSuccessHandler(successHandler))
+			.oauth2Client(Customizer.withDefaults())
+			.oauth2ResourceServer(o2r -> o2r.jwt(jwt -> jwt.jwtDecoder(jwtDecoder)));
 		// @formatter:on
 		return http.build();
 	}
@@ -83,5 +89,10 @@ public class ClientSecurityConfig {
 	@Bean
 	public RedisSerializer<Object> springSessionDefaultRedisSerializer(@Qualifier("securityObjectMapper") JsonMapper securityObjectMapper) {
 		return new GenericJacksonJsonRedisSerializer(securityObjectMapper);
+	}
+
+	@Bean
+	ReactiveJwtDecoder jwtDecoder() {
+		return ReactiveJwtDecoders.fromIssuerLocation("https://auth.example.com:8077");
 	}
 }
