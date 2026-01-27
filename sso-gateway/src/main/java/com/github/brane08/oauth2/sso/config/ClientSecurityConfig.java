@@ -1,5 +1,6 @@
 package com.github.brane08.oauth2.sso.config;
 
+import com.github.brane08.oauth2.sso.web.SsoCookieTransformationFilter;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -7,6 +8,7 @@ import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializ
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
+import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.jackson.SecurityJacksonModules;
 import org.springframework.security.oauth2.client.jackson.OAuth2ClientJacksonModule;
@@ -46,6 +48,7 @@ public class ClientSecurityConfig {
 			.csrf(csrf -> csrf.csrfTokenRepository(csrfRepo))
 			.securityContextRepository(contextRepo)
 			.requestCache(rc -> rc.requestCache(requestCache))
+			.addFilterBefore(new SsoCookieTransformationFilter(), SecurityWebFiltersOrder.AUTHENTICATION)
 			.authorizeExchange(ae -> ae
 				.pathMatchers("/actuator/**", "/logout", "/oauth2/**","/about", "/home", "default.html").permitAll()
 				.matchers(staticResourcesMatcher).permitAll()
