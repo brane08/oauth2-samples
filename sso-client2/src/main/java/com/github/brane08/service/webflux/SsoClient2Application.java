@@ -9,8 +9,8 @@ import org.springframework.cache.annotation.EnableCaching;
 @EnableCaching
 public class SsoClient2Application {
 
-	public static void main(String[] args) {
-		SpringApplication.run(SsoClient2Application.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(SsoClient2Application.class, args);
+    }
 
 }

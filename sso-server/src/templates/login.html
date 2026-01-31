@@ -1,19 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SSO Login</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SSO Login</title>
 </head>
 <body>
 <h1>Single Sign-On Login</h1>
 {% if error %}
-    <p style="color:red">{{ error }}</p>
+  <p style="color:red">{{ error }}</p>
 {% endif %}
 <form method="POST" action="/login?redirect={{ redirect }}">
-    <label>Username: <input type="text" name="username" required></label><br><br>
-    <label>Password: <input type="password" name="password" required></label><br><br>
-    <button type="submit">Login</button>
+  <label>Username: <input type="text" name="username" required></label><br><br>
+  <label>Password: <input type="password" name="password" required></label><br><br>
+  <button type="submit">Login</button>
 </form>
 </body>
 </html>

@@ -8,17 +8,17 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 public class LocalUserDetailsService implements UserDetailsService {
 
-	private final AppUserRepository userRepository;
+    private final AppUserRepository userRepository;
 
-	public LocalUserDetailsService(AppUserRepository userRepository) {
-		this.userRepository = userRepository;
-	}
+    public LocalUserDetailsService(AppUserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
 
-	@Override
-	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-		AppUser user = userRepository.findAppUserByUsername(username)
-				.orElseThrow(() -> new UsernameNotFoundException("Username not found"));
-		return AppUser.toUserDetails(user);
-	}
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        AppUser user = userRepository.findAppUserByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Username not found"));
+        return AppUser.toUserDetails(user);
+    }
 }

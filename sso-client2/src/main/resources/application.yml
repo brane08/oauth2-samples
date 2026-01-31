@@ -11,8 +11,16 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: "http://localhost:8079/uaa"
+          issuer-uri: "https://auth.example.com:8077"
+
 logging:
   level:
     root: info
     "org.springframework.security.web": info
+
+management:
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true

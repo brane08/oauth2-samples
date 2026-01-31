@@ -11,27 +11,27 @@ import java.util.Optional;
 @Repository
 public interface CustomAuthorizationRepository extends ListCrudRepository<CustomAuthorization, String> {
 
-	Optional<CustomAuthorization> findByState(String state);
+    Optional<CustomAuthorization> findByState(String state);
 
-	Optional<CustomAuthorization> findByAuthorizationCodeValue(String authorizationCode);
+    Optional<CustomAuthorization> findByAuthorizationCodeValue(String authorizationCode);
 
-	Optional<CustomAuthorization> findByAccessTokenValue(String accessToken);
+    Optional<CustomAuthorization> findByAccessTokenValue(String accessToken);
 
-	Optional<CustomAuthorization> findByRefreshTokenValue(String refreshToken);
+    Optional<CustomAuthorization> findByRefreshTokenValue(String refreshToken);
 
-	Optional<CustomAuthorization> findByOidcIdTokenValue(String idToken);
+    Optional<CustomAuthorization> findByOidcIdTokenValue(String idToken);
 
-	Optional<CustomAuthorization> findByUserCodeValue(String userCode);
+    Optional<CustomAuthorization> findByUserCodeValue(String userCode);
 
-	Optional<CustomAuthorization> findByDeviceCodeValue(String deviceCode);
+    Optional<CustomAuthorization> findByDeviceCodeValue(String deviceCode);
 
-	@Query("select a from oauth2_authorization a where a.state = :token" +
-			" or a.authorization_code_value = :token" +
-			" or a.access_token_value = :token" +
-			" or a.refresh_token_value = :token" +
-			" or a.oidc_id_token_value = :token" +
-			" or a.user_code_value = :token" +
-			" or a.device_code_value = :token"
-	)
-	Optional<CustomAuthorization> findByStateOrAuthorizationCodeValueOrAccessTokenValueOrRefreshTokenValueOrOidcIdTokenValueOrUserCodeValueOrDeviceCodeValue(@Param("token") String token);
+    @Query("select a from oauth2_authorization a where a.state = :token" +
+            " or a.authorization_code_value = :token" +
+            " or a.access_token_value = :token" +
+            " or a.refresh_token_value = :token" +
+            " or a.oidc_id_token_value = :token" +
+            " or a.user_code_value = :token" +
+            " or a.device_code_value = :token"
+    )
+    Optional<CustomAuthorization> findByStateOrAuthorizationCodeValueOrAccessTokenValueOrRefreshTokenValueOrOidcIdTokenValueOrUserCodeValueOrDeviceCodeValue(@Param("token") String token);
 }

@@ -35,15 +35,6 @@ spring:
     view:
       prefix: "/WEB-INF/jsp/"
       suffix: ".jsp"
-  session:
-    redis:
-      namespace: sas:session
-      flush-mode: on_save
-      save-mode: on_set_attribute
-  data:
-    redis:
-      host: localhost
-      port: 6379
   web:
     error:
       include-exception: true
@@ -54,12 +45,23 @@ logging:
   level:
     root: info
     "org.springframework.security": debug
-    "org.springframework.security.web": debug
-    "org.springframework.security.web.savedrequest": debug
-#    "org.springframework.security.web.FilterChainProxy": trace
-    "org.springframework.security.oauth2": debug
-    "org.springframework.data.redis": debug
-    "org.springframework.session.redis": debug
+    "org.springframework.security.web": info
+    "org.springframework.security.web.savedrequest": info
+    #    "org.springframework.security.web.FilterChainProxy": trace
+    "org.springframework.security.oauth2": info
+    "org.springframework.security.oauth2.server": info
+    "org.springframework.security.oauth2.core": info
+    "org.springframework.data.mongodb": info
+    "org.springframework.session.mongodb": info
     "com.github.brane08.oauth2.server": debug
+
+management:
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+
 sas:
-  gateway-url: https://gateway.example.com
+  use-redirect-in-filter: false
+  gateway-url: https://sso.example.com:8040

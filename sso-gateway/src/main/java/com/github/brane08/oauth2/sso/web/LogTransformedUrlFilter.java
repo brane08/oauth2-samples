@@ -15,18 +15,18 @@ import static reactor.netty.http.HttpConnectionLiveness.log;
 @Component
 public class LogTransformedUrlFilter implements GlobalFilter, Ordered {
 
-	@Override
-	public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-		URI original = exchange.getRequest().getURI();
-		return chain.filter(exchange)
-				.doFirst(() -> {
-					URI routed = exchange.getAttribute(ServerWebExchangeUtils.GATEWAY_REQUEST_URL_ATTR);
-					log.info("Original -> Routed URI: {} -> {}", original, routed);
-				});
-	}
+    @Override
+    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        URI original = exchange.getRequest().getURI();
+        return chain.filter(exchange)
+                .doFirst(() -> {
+                    URI routed = exchange.getAttribute(ServerWebExchangeUtils.GATEWAY_REQUEST_URL_ATTR);
+                    log.info("Original -> Routed URI: {} -> {}", original, routed);
+                });
+    }
 
-	@Override
-	public int getOrder() {
-		return Ordered.LOWEST_PRECEDENCE;
-	}
+    @Override
+    public int getOrder() {
+        return Ordered.LOWEST_PRECEDENCE;
+    }
 }

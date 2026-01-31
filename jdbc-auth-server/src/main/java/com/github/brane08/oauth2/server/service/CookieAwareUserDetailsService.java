@@ -8,22 +8,22 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 public class CookieAwareUserDetailsService implements UserDetailsService {
 
-	private static final Logger LOG = LoggerFactory.getLogger(CookieAwareUserDetailsService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(CookieAwareUserDetailsService.class);
 
-	private final UserDetailsService delegate;
+    private final UserDetailsService delegate;
 
-	public CookieAwareUserDetailsService(UserDetailsService delegate) {
-		this.delegate = delegate;
-	}
+    public CookieAwareUserDetailsService(UserDetailsService delegate) {
+        this.delegate = delegate;
+    }
 
-	@Override
-	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-		LOG.debug("Attempting to load user by username {}", username);
-		String actualUsername = username;
-		if (username.startsWith("cookie:")) {
-			actualUsername = username.substring("cookie:".length());
-			LOG.info("Found cookie value as pre-authenticated");
-		}
-		return delegate.loadUserByUsername(actualUsername);
-	}
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        LOG.debug("Attempting to load user by username {}", username);
+        String actualUsername = username;
+        if (username.startsWith("cookie:")) {
+            actualUsername = username.substring("cookie:".length());
+            LOG.info("Found cookie value as pre-authenticated");
+        }
+        return delegate.loadUserByUsername(actualUsername);
+    }
 }

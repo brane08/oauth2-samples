@@ -13,16 +13,16 @@ import reactor.core.publisher.Mono;
 @Configuration(proxyBeanMethods = false)
 public class Client2SecurityConfig {
 
-	@Bean
-	public SecurityWebFilterChain filterChain(ServerHttpSecurity http) {
-		return http.csrf(ServerHttpSecurity.CsrfSpec::disable)
-				.authorizeExchange(ae -> ae.anyExchange().authenticated())
-				.oauth2ResourceServer(ors -> ors.jwt(Customizer.withDefaults()))
-				.build();
-	}
+    @Bean
+    public SecurityWebFilterChain filterChain(ServerHttpSecurity http) {
+        return http.csrf(ServerHttpSecurity.CsrfSpec::disable)
+                .authorizeExchange(ae -> ae.anyExchange().authenticated())
+                .oauth2ResourceServer(ors -> ors.jwt(Customizer.withDefaults()))
+                .build();
+    }
 
-	@Bean
-	public WebSessionManager webSessionManager() {
-		return exchange -> Mono.empty();
-	}
+    @Bean
+    public WebSessionManager webSessionManager() {
+        return exchange -> Mono.empty();
+    }
 }

@@ -13,14 +13,11 @@ import com.nimbusds.jose.proc.SecurityContext;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
-import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
-import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
@@ -51,7 +48,6 @@ import org.springframework.security.web.authentication.SavedRequestAwareAuthenti
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.savedrequest.RequestCache;
-import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -68,33 +64,44 @@ import java.util.UUID;
 @Configuration
 public class JdbcAuthServerConfig {
 
-	private static final Logger LOG = LoggerFactory.getLogger(JdbcAuthServerConfig.class);
+    private static final Logger LOG = LoggerFactory.getLogger(JdbcAuthServerConfig.class);
 
-	private final RequestMatcher staticResourcesMatcher;
-	private final RequestMatcher publicPathMatcher;
-	private final RequestMatcher oauth2ProtectedMatcher;
+    private final RequestMatcher staticResourcesMatcher;
+    private final RequestMatcher publicPathMatcher;
+    private final RequestMatcher oauth2ProtectedMatcher;
 
-	public JdbcAuthServerConfig(RequestMatcher staticResourcesMatcher, RequestMatcher publicPathMatcher,
-								RequestMatcher oauth2ProtectedMatcher) {
-		this.staticResourcesMatcher = staticResourcesMatcher;
-		this.publicPathMatcher = publicPathMatcher;
-		this.oauth2ProtectedMatcher = oauth2ProtectedMatcher;
-	}
+    public JdbcAuthServerConfig(RequestMatcher staticResourcesMatcher, RequestMatcher publicPathMatcher,
+                                RequestMatcher oauth2ProtectedMatcher) {
+        this.staticResourcesMatcher = staticResourcesMatcher;
+        this.publicPathMatcher = publicPathMatcher;
+        this.oauth2ProtectedMatcher = oauth2ProtectedMatcher;
+    }
 
-	@Bean
-	public PasswordEncoder passwordEncoder() {
-		return PasswordEncoderFactories.createDelegatingPasswordEncoder();
-	}
+    private static KeyPair generateRsaKey() {
+        try {
+            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+            keyPairGenerator.initialize(2048);
+            return keyPairGenerator.generateKeyPair();
+        } catch (Exception ex) {
+            throw new IllegalStateException(ex);
+        }
+    }
 
-	@Bean
-	@Order(Ordered.HIGHEST_PRECEDENCE)
-	public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http,
-																	  SecurityContextRepository contextRepository,
-																	  RequestCache requestCache,
-																	  SsoCookieAuthenticationFilter cookieFilter,
-																	  SsoAuthenticationProvider ssoAuthProvider) {
-		final OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
-		// @formatter:off
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+    }
+
+    @Bean
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http,
+                                                                      SecurityContextRepository contextRepository,
+                                                                      RequestCache requestCache,
+                                                                      SsoCookieAuthenticationFilter cookieFilter,
+                                                                      SsoAuthenticationProvider ssoAuthProvider,
+                                                                      AuthenticationEntryPoint customeAuthenticationEntrypoint) {
+        final OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
+        // @formatter:off
 		http
 				.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
 				.with(authorizationServerConfigurer, configurer -> configurer
@@ -115,23 +122,23 @@ public class JdbcAuthServerConfig {
 				)
 				.authenticationProvider(ssoAuthProvider)
 				.exceptionHandling((exceptions) -> exceptions
-						.authenticationEntryPoint(new NoOpAuthenticationEntryPoint())
+						.authenticationEntryPoint(customeAuthenticationEntrypoint)
 				)
 				.formLogin(AbstractHttpConfigurer::disable)
 				.httpBasic(AbstractHttpConfigurer::disable);
 		http.addFilterAfter(cookieFilter, AnonymousAuthenticationFilter.class);
 		// @formatter:on
-		return http.build();
-	}
+        return http.build();
+    }
 
-	@Bean
-	@Order(Ordered.HIGHEST_PRECEDENCE + 1)
-	public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http,
-														  SecurityContextRepository contextRepository,
-														  RequestCache requestCache,
-														  SsoCookieAuthenticationFilter cookieFilter,
-														  SsoAuthenticationProvider ssoAuthProvider) {
-		// @formatter:off
+    @Bean
+    @Order(Ordered.HIGHEST_PRECEDENCE + 1)
+    public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http,
+                                                          SecurityContextRepository contextRepository,
+                                                          RequestCache requestCache,
+                                                          SsoCookieAuthenticationFilter cookieFilter,
+                                                          SsoAuthenticationProvider ssoAuthProvider) {
+        // @formatter:off
 		http
 				.csrf(AbstractHttpConfigurer::disable)
 				.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
@@ -148,150 +155,150 @@ public class JdbcAuthServerConfig {
 				.requestCache(c -> c.requestCache(requestCache));
 		http.addFilterAfter(cookieFilter, AnonymousAuthenticationFilter.class);
 		// @formatter:on
-		return http.build();
-	}
+        return http.build();
+    }
 
-	@Bean
-	public UserDetailsService userDetailsService(AppUserRepository userRepository) {
-		return new CookieAwareUserDetailsService(new LocalUserDetailsService(userRepository));
-	}
+    @Bean
+    public UserDetailsService userDetailsService(AppUserRepository userRepository) {
+        return new CookieAwareUserDetailsService(new LocalUserDetailsService(userRepository));
+    }
 
-	@Bean
-	public JWKSource<SecurityContext> jwkSource() {
-		KeyPair keyPair = generateRsaKey();
-		RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
-		RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
-		RSAKey rsaKey = new RSAKey.Builder(publicKey).privateKey(privateKey).keyID(UUID.randomUUID().toString()).build();
-		JWKSet jwkSet = new JWKSet(rsaKey);
-		return new ImmutableJWKSet<>(jwkSet);
-	}
+    @Bean
+    public JWKSource<SecurityContext> jwkSource() {
+        KeyPair keyPair = generateRsaKey();
+        RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
+        RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
+        RSAKey rsaKey = new RSAKey.Builder(publicKey).privateKey(privateKey).keyID(UUID.randomUUID().toString()).build();
+        JWKSet jwkSet = new JWKSet(rsaKey);
+        return new ImmutableJWKSet<>(jwkSet);
+    }
 
-	private static KeyPair generateRsaKey() {
-		try {
-			KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-			keyPairGenerator.initialize(2048);
-			return keyPairGenerator.generateKeyPair();
-		} catch (Exception ex) {
-			throw new IllegalStateException(ex);
-		}
-	}
+    @Bean
+    public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
+        return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
+    }
 
-	@Bean
-	public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
-		return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
-	}
+    @Bean
+    public AuthorizationServerSettings authorizationServerSettings() {
+        return AuthorizationServerSettings.builder().build();
+    }
 
-	@Bean
-	public AuthorizationServerSettings authorizationServerSettings() {
-		return AuthorizationServerSettings.builder().build();
-	}
+    @Bean
+    OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer() {
+        return context -> {
+            if (!OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
+                return;
+            }
+            var principal = context.getPrincipal();
+            context.getClaims().claim("user", principal.getPrincipal());
+        };
+    }
 
-	@Bean
-	OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer() {
-		return context -> {
-			if (!OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
-				return;
-			}
-			var principal = context.getPrincipal();
-			context.getClaims().claim("user", principal.getPrincipal());
-		};
-	}
+    @Bean
+    public JwtEncoder jwtEncoder(JWKSource<SecurityContext> jwkSource) {
+        return new NimbusJwtEncoder(jwkSource);
+    }
 
-	@Bean
-	public JwtEncoder jwtEncoder(JWKSource<SecurityContext> jwkSource) {
-		return new NimbusJwtEncoder(jwkSource);
-	}
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
 
-	@Bean
-	public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-		return config.getAuthenticationManager();
-	}
+    @Bean
+    AuthenticationSuccessHandler authenticationSuccessHandler(RequestCache requestCache) {
+        var successHandler = new SavedRequestAwareAuthenticationSuccessHandler();
+        successHandler.setDefaultTargetUrl("/");
+        successHandler.setAlwaysUseDefaultTargetUrl(false);
+        successHandler.setRequestCache(requestCache);
+        return successHandler;
+    }
 
-	@Bean
-	AuthenticationSuccessHandler authenticationSuccessHandler(RequestCache requestCache) {
-		var successHandler = new SavedRequestAwareAuthenticationSuccessHandler();
-		successHandler.setDefaultTargetUrl("/");
-		successHandler.setAlwaysUseDefaultTargetUrl(false);
-		successHandler.setRequestCache(requestCache);
-		return successHandler;
-	}
+    @Bean
+    SecurityContextRepository contextRepository() {
+        return new HttpSessionSecurityContextRepository();
+    }
 
-	@Bean
-	SecurityContextRepository contextRepository() {
-		return new HttpSessionSecurityContextRepository();
-	}
+    @Bean
+    RequestCache requestCache() {
+        return new SkipUrlHttpRequestCache();
+    }
 
-	@Bean
-	RequestCache requestCache() {
-		return new SkipUrlHttpRequestCache();
-	}
+    @Bean
+    SsoCookieAuthenticationFilter cookieFilter(AuthenticationManager authenticationManager,
+                                               SecurityContextRepository contextRepository,
+                                               AuthenticationSuccessHandler successHandler,
+                                               RequestCache requestCache,
+                                               @Value("${sas.gateway-url}") String gatewayBaseUrl,
+                                               @Value("${sas.use-redirect-in-filter}") boolean useRedirectInFilter) {
+        return new SsoCookieAuthenticationFilter(authenticationManager, contextRepository, successHandler, requestCache,
+                staticResourcesMatcher, publicPathMatcher, oauth2ProtectedMatcher, gatewayBaseUrl, useRedirectInFilter);
+    }
 
-	@Bean
-	SsoCookieAuthenticationFilter cookieFilter(AuthenticationManager authenticationManager,
-											   SecurityContextRepository contextRepository,
-											   AuthenticationSuccessHandler successHandler,
-											   RequestCache requestCache,
-											   @Value("${sas.gateway-url}") String gatewayBaseUrl) {
-		return new SsoCookieAuthenticationFilter(authenticationManager, contextRepository, successHandler, requestCache,
-				staticResourcesMatcher, publicPathMatcher, oauth2ProtectedMatcher, gatewayBaseUrl);
-	}
+    @Bean("securityObjectMapper")
+    public JsonMapper securityObjectMapper() {
+        ClassLoader classLoader = JdbcAuthServerConfig.class.getClassLoader();
+        return JsonMapper.builder()
+                .addModules(SecurityJacksonModules.getModules(classLoader))
+                .addModules(new OAuth2AuthorizationServerJacksonModule())
+                .build();
+    }
 
-	@Bean("securityObjectMapper")
-	public JsonMapper securityObjectMapper() {
-		ClassLoader classLoader = JdbcAuthServerConfig.class.getClassLoader();
-		return JsonMapper.builder()
-				.addModules(SecurityJacksonModules.getModules(classLoader))
-				.addModules(new OAuth2AuthorizationServerJacksonModule())
-				.build();
-	}
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration strictConfig = new CorsConfiguration();
+        strictConfig.addAllowedOriginPattern("https://*.example.com:8078");
+        strictConfig.addAllowedOriginPattern("http://*.example.com:8040");
+        strictConfig.setAllowCredentials(true);
+        strictConfig.addAllowedMethod("POST");
+        strictConfig.addAllowedMethod("GET");
+        strictConfig.addAllowedMethod("OPTIONS");
+        strictConfig.addAllowedMethod("HEAD");
+        strictConfig.addAllowedHeader("*");
+        strictConfig.setMaxAge(Duration.ofMinutes(30));
+        CorsConfiguration lenientConfig = new CorsConfiguration();
+        lenientConfig.addAllowedOriginPattern("*");
+        lenientConfig.setAllowCredentials(false);
+        lenientConfig.addAllowedMethod("GET");
+        lenientConfig.addAllowedMethod("HEAD");
+        lenientConfig.addAllowedMethod("OPTIONS");
+        lenientConfig.addAllowedHeader("*");
+        lenientConfig.setMaxAge(Duration.ofMinutes(60));
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/oauth2/**", strictConfig);
+        source.registerCorsConfiguration("/userinfo", strictConfig);
+        source.registerCorsConfiguration("/**/*.js", lenientConfig);
+        source.registerCorsConfiguration("/**/*.css", lenientConfig);
+        source.registerCorsConfiguration("/**/*.wasm", lenientConfig);
+        source.registerCorsConfiguration("/**/*.map", lenientConfig);
+        source.registerCorsConfiguration("/assets/**", lenientConfig);
+        return source;
+    }
 
-	@Bean
-	public RedisSerializer<Object> springSessionDefaultRedisSerializer(@Qualifier("securityObjectMapper") JsonMapper securityObjectMapper) {
-		return new GenericJacksonJsonRedisSerializer(securityObjectMapper);
-	}
-
-	@Bean
-	public CorsConfigurationSource corsConfigurationSource() {
-		CorsConfiguration strictConfig = new CorsConfiguration();
-		strictConfig.addAllowedOriginPattern("https://*.example.com:8078");
-		strictConfig.addAllowedOriginPattern("http://*.example.com:8040");
-		strictConfig.setAllowCredentials(true);
-		strictConfig.addAllowedMethod("POST");
-		strictConfig.addAllowedMethod("GET");
-		strictConfig.addAllowedMethod("OPTIONS");
-		strictConfig.addAllowedMethod("HEAD");
-		strictConfig.addAllowedHeader("*");
-		strictConfig.setMaxAge(Duration.ofMinutes(30));
-		CorsConfiguration lenientConfig = new CorsConfiguration();
-		lenientConfig.addAllowedOriginPattern("*");
-		lenientConfig.setAllowCredentials(false);
-		lenientConfig.addAllowedMethod("GET");
-		lenientConfig.addAllowedMethod("HEAD");
-		lenientConfig.addAllowedMethod("OPTIONS");
-		lenientConfig.addAllowedHeader("*");
-		lenientConfig.setMaxAge(Duration.ofMinutes(60));
-		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-		source.registerCorsConfiguration("/oauth2/**", strictConfig);
-		source.registerCorsConfiguration("/userinfo", strictConfig);
-		source.registerCorsConfiguration("/**/*.js", lenientConfig);
-		source.registerCorsConfiguration("/**/*.css", lenientConfig);
-		source.registerCorsConfiguration("/**/*.wasm", lenientConfig);
-		source.registerCorsConfiguration("/**/*.map", lenientConfig);
-		source.registerCorsConfiguration("/assets/**", lenientConfig);
-		return source;
-	}
-
-	@Bean
-	public AuthenticationEntryPoint customAuthenticationEntryPoint(@Value("${sas.gateway-url}") String gatewayBaseUrl) {
-		return (request, response, authException) -> {
-			String accept = request.getHeader("Accept");
-			if (accept != null && accept.contains("text/html")) {
-				response.sendRedirect(gatewayBaseUrl + request.getRequestURI() + (request.getQueryString() != null ? "?" + request.getQueryString() : ""));
-			} else {
-				response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-				response.setContentType("application/json");
-				response.getWriter().write("{\"error\":\"unauthorized\",\"message\":\"Authentication required\"}");
-			}
-		};
-	}
+    @Bean
+    public AuthenticationEntryPoint customAuthenticationEntryPoint(@Value("${sas.gateway-url}") String gatewayBaseUrl) {
+        return (request, response, authException) -> {
+            String accept = request.getHeader("Accept");
+            LOG.debug("Authentication entrypoint called for uri: {}", request.getRequestURI());
+            if (accept != null && accept.contains("text/html")) {
+                String[] values = request.getParameterValues("sso_continue");
+                int retryCount = 1;
+                if (values != null && values.length > 0 && values[0] != null) {
+                    try {
+                        retryCount = Integer.parseInt(values[0]);
+                    } catch (NumberFormatException e) {
+                        LOG.warn("Could not parse 'sso_continue' integer: {}", values[0]);
+                    }
+                }
+                LOG.debug("Authentication entrypoint handling html request, redirect to gateway base url");
+                String redirectUrl = gatewayBaseUrl + "?sso_continue=" + retryCount;
+                response.setStatus(HttpServletResponse.SC_FOUND);
+                response.setHeader("Location", redirectUrl);
+            } else {
+                LOG.debug("Authentication entrypoint handling non-html request, send unauthorized error");
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"error\":\"unauthorized\",\"message\":\"Authentication required\"}");
+            }
+        };
+    }
 }
