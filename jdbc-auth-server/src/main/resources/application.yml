@@ -56,7 +56,7 @@ logging:
     "org.springframework.security": debug
     "org.springframework.security.web": debug
     "org.springframework.security.web.savedrequest": debug
-#    "org.springframework.security.web.FilterChainProxy": trace
+    #    "org.springframework.security.web.FilterChainProxy": trace
     "org.springframework.security.oauth2": debug
     "org.springframework.data.redis": debug
     "org.springframework.session.redis": debug

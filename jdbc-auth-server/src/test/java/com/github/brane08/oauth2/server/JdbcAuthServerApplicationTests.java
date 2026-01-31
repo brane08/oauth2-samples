@@ -6,9 +6,9 @@ import java.util.UUID;
 
 class JdbcAuthServerApplicationTests {
 
-	@Test
-	void contextLoads() {
-		System.out.println(UUID.randomUUID().toString());
-	}
+    @Test
+    void contextLoads() {
+        System.out.println(UUID.randomUUID().toString());
+    }
 
 }

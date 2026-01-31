@@ -10,15 +10,15 @@ import tools.jackson.databind.json.JsonMapper;
 @RequestMapping("/api")
 public class HomeController {
 
-	private final JsonMapper jsonMapper;
+    private final JsonMapper jsonMapper;
 
-	public HomeController(JsonMapper jsonMapper) {
-		this.jsonMapper = jsonMapper;
-	}
+    public HomeController(JsonMapper jsonMapper) {
+        this.jsonMapper = jsonMapper;
+    }
 
-	@GetMapping
-	public JsonNode getSample() {
-		return jsonMapper.createObjectNode().put("status", true).put("message", "This is default API of app2")
-				.put("source", "App2");
-	}
+    @GetMapping
+    public JsonNode getSample() {
+        return jsonMapper.createObjectNode().put("status", true).put("message", "This is default API of app2")
+                .put("source", "App2");
+    }
 }

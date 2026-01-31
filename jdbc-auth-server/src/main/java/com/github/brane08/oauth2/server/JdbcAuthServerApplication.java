@@ -7,8 +7,8 @@ import org.springframework.boot.webmvc.autoconfigure.error.ErrorMvcAutoConfigura
 @SpringBootApplication(exclude = {ErrorMvcAutoConfiguration.class})
 public class JdbcAuthServerApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(JdbcAuthServerApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(JdbcAuthServerApplication.class, args);
+    }
 
 }

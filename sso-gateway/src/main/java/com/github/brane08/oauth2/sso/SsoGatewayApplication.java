@@ -6,14 +6,14 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class SsoGatewayApplication {
 
-	static {
-		System.setProperty("com.sun.net.ssl.checkRevocation", "false");
-		System.setProperty("jdk.internal.httpclient.disableHostnameVerification", "true");
+    static {
+        System.setProperty("com.sun.net.ssl.checkRevocation", "false");
+        System.setProperty("jdk.internal.httpclient.disableHostnameVerification", "true");
 //		System.setProperty("javax.net.debug", "all");
-	}
+    }
 
-	public static void main(String[] args) {
-		SpringApplication.run(SsoGatewayApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(SsoGatewayApplication.class, args);
+    }
 
 }

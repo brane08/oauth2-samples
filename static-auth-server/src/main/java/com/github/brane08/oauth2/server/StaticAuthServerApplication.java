@@ -6,13 +6,13 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class StaticAuthServerApplication {
 
-	static {
-		System.setProperty("com.sun.net.ssl.checkRevocation","false");
-		System.setProperty("jdk.internal.httpclient.disableHostnameVerification","true");
-	}
+    static {
+        System.setProperty("com.sun.net.ssl.checkRevocation", "false");
+        System.setProperty("jdk.internal.httpclient.disableHostnameVerification", "true");
+    }
 
-	public static void main(String[] args) {
-		SpringApplication.run(StaticAuthServerApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(StaticAuthServerApplication.class, args);
+    }
 
 }

@@ -1,4 +1,5 @@
 # Cookie-First SSO + Spring Authorization Server
+
 ## Canonical Architecture, Reference, and AI Prompt
 
 ---
@@ -21,10 +22,10 @@ Spring Authorization Server **never owns login**, UI, or browser authentication 
 
 - Authentication is performed **only** via an external SSO cookie
 - SAS:
-  - Does NOT render login pages
-  - Does NOT use form login
-  - Does NOT redirect to /login
-  - Does NOT prompt for credentials
+    - Does NOT render login pages
+    - Does NOT use form login
+    - Does NOT redirect to /login
+    - Does NOT prompt for credentials
 - Browser authentication state lives **outside SAS**
 
 ---
@@ -37,11 +38,11 @@ Spring Authorization Server **never owns login**, UI, or browser authentication 
 - Injects identity via cookie
 - OAuth-agnostic
 - Cookie:
-  - Domain=.example.com
-  - Path=/
-  - Secure
-  - HttpOnly
-  - SameSite=None
+    - Domain=.example.com
+    - Path=/
+    - Secure
+    - HttpOnly
+    - SameSite=None
 
 ### Gateway (Spring Cloud Gateway)
 
@@ -83,11 +84,13 @@ Spring Authorization Server **never owns login**, UI, or browser authentication 
 ## 6. RequestCache Rules
 
 ### Gateway
+
 - REQUIRED
 - Saves /oauth2/authorization/**
 - Restores original browser request
 
 ### SAS
+
 - Optional but scoped
 - Save only /oauth2/authorize
 - Never save / or /login
@@ -99,8 +102,8 @@ Spring Authorization Server **never owns login**, UI, or browser authentication 
 - Must use real domain (example.com)
 - localhost, .test, .dev are invalid
 - CA must be trusted by:
-  - Browser (OS trust)
-  - JVM truststore (Gateway + SAS)
+    - Browser (OS trust)
+    - JVM truststore (Gateway + SAS)
 
 ---
 
