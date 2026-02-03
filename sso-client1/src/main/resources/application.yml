@@ -8,7 +8,7 @@ spring:
   main:
     banner-mode: off
   datasource:
-    url: "jdbc:postgresql://localhost:5432/prore?currentSchema=oauth2"
+    url: "jdbc:postgresql://localhost:5432/sakila?currentSchema=public"
     driver-class-name: "org.postgresql.Driver"
     hikari:
       pool-name: "client1-ds"
@@ -19,19 +19,20 @@ spring:
     password: ""
   jpa:
     open-in-view: false
-
+  thymeleaf:
+    cache: false
   security:
     oauth2:
       resourceserver:
         jwt:
           issuer-uri: "https://auth.example.com:8077"
-  web:
-    resources:
-      static-locations: /Users/bhushanr/incubator/samples/oauth2-samples/.ui-client1/dist/.ui-client1/browser, classpath:/static/
+
 logging:
   level:
     root: info
     "org.springframework.security.web": info
+    "org.springframework.web": debug
+    "org.thymeleaf": debug
 
 management:
   health:

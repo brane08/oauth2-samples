@@ -12,10 +12,12 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class Client1SecurityConfig {
 
+    private static final String[] STATIC_PATTERNS = new String[]{"/**/*.js", "/**/*.css"};
+
     @Bean
     public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
         http.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(ahr -> ahr.anyRequest().authenticated())
+                .authorizeHttpRequests(ahr -> ahr.requestMatchers(STATIC_PATTERNS).permitAll().anyRequest().authenticated())
                 .oauth2ResourceServer(ors -> ors.jwt(Customizer.withDefaults()));
         return http.build();
     }

@@ -1,0 +1,6 @@
+<form th:fragment="form(errors)" th:object="${filterForm}"
+      hx-post="@{/search}" hx-target="#results-table">
+  <input th:field="*{keyword}" th:errorclass="is-invalid"/>
+  <span th:errors="*{keyword}" class="invalid-feedback"></span>
+  <!-- other fields -->
+</form>

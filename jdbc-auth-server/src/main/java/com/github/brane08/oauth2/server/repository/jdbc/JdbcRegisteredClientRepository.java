@@ -1,5 +1,7 @@
 package com.github.brane08.oauth2.server.repository.jdbc;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.brane08.oauth2.server.domain.CustomRegisteredClient;
 import com.github.brane08.oauth2.server.repository.CustomRegisteredClientRepository;
 import jakarta.annotation.PostConstruct;
@@ -18,8 +20,6 @@ import org.springframework.security.oauth2.server.authorization.settings.TokenSe
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
-import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -38,10 +38,10 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
 
     private final CustomRegisteredClientRepository clientRepository;
     private final JdbcAggregateTemplate aggregateTemplate;
-    private final JsonMapper securityObjectMapper;
+    private final ObjectMapper securityObjectMapper;
     private final PasswordEncoder encoder;
 
-    public JdbcRegisteredClientRepository(@Qualifier("securityObjectMapper") JsonMapper securityObjectMapper,
+    public JdbcRegisteredClientRepository(@Qualifier("securityObjectMapper") ObjectMapper securityObjectMapper,
                                           CustomRegisteredClientRepository clientRepository,
                                           JdbcAggregateTemplate aggregateTemplate, PasswordEncoder encoder) {
         Assert.notNull(clientRepository, "clientRepository cannot be null");

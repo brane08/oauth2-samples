@@ -9,7 +9,11 @@ server:
     trust-store: "${user.dir}/../certs/truststore.jks"
     trust-store-password: "changeit"
     enabled: true
-  forward-headers-strategy: framework
+  forward-headers-strategy: native
+  error:
+    include-exception: true
+    include-stacktrace: always
+    include-message: always
 
 spring:
   application:
@@ -52,21 +56,26 @@ spring:
                 - Path=/flux/**
               filters:
                 - TokenRelay=
-  web:
-    error:
-      include-exception: true
-      include-stacktrace: always
-      include-message: always
 
 logging:
   level:
     root: info
     "org.springframework.cloud.gateway": info
-    "org.springframework.security": info
-    "org.springframework.security.oauth2": info
+    "org.springframework.security": debug
+    "org.springframework.security.oauth2": debug
+    "org.springframework.security.oauth2.client": debug
     "org.springframework.security.oauth2.core.OAuth2TokenValidator": debug
-    "org.springframework.security.oauth2.client": info
+
+    "org.springframework.security.web.FilterChainProxy": debug
     "org.springframework.web": info
+    "org.springframework.web.client.RestTemplate": debug
+
+    "org.springframework.data.mongodb.core.MongoTemplate": info
+
+    "org.springframework.session": info
+    "org.springframework.security.web.context.HttpSessionSecurityContextRepository": info
+    "org.springframework.security.web.savedrequest.HttpSessionRequestCache": info
+    "org.mongodb.spring.session": info
 
 management:
   health:

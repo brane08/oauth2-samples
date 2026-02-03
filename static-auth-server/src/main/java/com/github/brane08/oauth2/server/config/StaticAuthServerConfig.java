@@ -22,9 +22,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -40,6 +38,8 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
+import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
@@ -60,7 +60,7 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import tools.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -109,7 +109,7 @@ public class StaticAuthServerConfig {
                                                                       SecurityContextRepository contextRepository,
                                                                       RequestCache requestCache,
                                                                       SsoCookieAuthenticationFilter cookieFilter,
-                                                                      SsoAuthenticationProvider ssoAuthProvider) {
+                                                                      SsoAuthenticationProvider ssoAuthProvider) throws Exception {
         final OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
         // @formatter:off
 		http
@@ -147,7 +147,7 @@ public class StaticAuthServerConfig {
                                                           SecurityContextRepository contextRepository,
                                                           RequestCache requestCache,
                                                           SsoCookieAuthenticationFilter cookieFilter,
-                                                          SsoAuthenticationProvider ssoAuthProvider) {
+                                                          SsoAuthenticationProvider ssoAuthProvider) throws Exception {
         // @formatter:off
 		http
 			.csrf(AbstractHttpConfigurer::disable)

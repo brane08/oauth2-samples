@@ -1,4 +1,4 @@
-package com.github.brane08.oauth2.server.web.utils;
+package com.github.brane08.oauth2.sso.web.utils;
 
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;

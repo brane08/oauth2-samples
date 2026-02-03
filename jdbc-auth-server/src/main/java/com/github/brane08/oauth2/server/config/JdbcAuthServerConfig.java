@@ -1,8 +1,9 @@
 package com.github.brane08.oauth2.server.config;
 
+import com.fasterxml.jackson.databind.Module;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.brane08.oauth2.server.filters.SsoCookieAuthenticationFilter;
 import com.github.brane08.oauth2.server.repository.AppUserRepository;
-import com.github.brane08.oauth2.server.service.CookieAwareUserDetailsService;
 import com.github.brane08.oauth2.server.service.LocalUserDetailsService;
 import com.github.brane08.oauth2.server.web.SsoAuthenticationProvider;
 import com.nimbusds.jose.jwk.JWKSet;
@@ -23,19 +24,19 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.jackson.SecurityJacksonModules;
+import org.springframework.security.jackson2.SecurityJackson2Modules;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
-import org.springframework.security.oauth2.server.authorization.jackson.OAuth2AuthorizationServerJacksonModule;
+import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
+import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
+import org.springframework.security.oauth2.server.authorization.jackson2.OAuth2AuthorizationServerJackson2Module;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
@@ -43,7 +44,6 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.security.web.authentication.NoOpAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
@@ -52,13 +52,13 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.time.Duration;
+import java.util.List;
 import java.util.UUID;
 
 @Configuration
@@ -99,7 +99,7 @@ public class JdbcAuthServerConfig {
                                                                       RequestCache requestCache,
                                                                       SsoCookieAuthenticationFilter cookieFilter,
                                                                       SsoAuthenticationProvider ssoAuthProvider,
-                                                                      AuthenticationEntryPoint customeAuthenticationEntrypoint) {
+                                                                      AuthenticationEntryPoint customeAuthenticationEntrypoint) throws Exception {
         final OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
         // @formatter:off
 		http
@@ -137,7 +137,7 @@ public class JdbcAuthServerConfig {
                                                           SecurityContextRepository contextRepository,
                                                           RequestCache requestCache,
                                                           SsoCookieAuthenticationFilter cookieFilter,
-                                                          SsoAuthenticationProvider ssoAuthProvider) {
+                                                          SsoAuthenticationProvider ssoAuthProvider) throws Exception {
         // @formatter:off
 		http
 				.csrf(AbstractHttpConfigurer::disable)
@@ -160,7 +160,7 @@ public class JdbcAuthServerConfig {
 
     @Bean
     public UserDetailsService userDetailsService(AppUserRepository userRepository) {
-        return new CookieAwareUserDetailsService(new LocalUserDetailsService(userRepository));
+        return new LocalUserDetailsService(userRepository);
     }
 
     @Bean
@@ -195,12 +195,12 @@ public class JdbcAuthServerConfig {
     }
 
     @Bean
-    public JwtEncoder jwtEncoder(JWKSource<SecurityContext> jwkSource) {
+    JwtEncoder jwtEncoder(JWKSource<SecurityContext> jwkSource) {
         return new NimbusJwtEncoder(jwkSource);
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+    AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
@@ -224,6 +224,11 @@ public class JdbcAuthServerConfig {
     }
 
     @Bean
+    SsoAuthenticationProvider ssoAuthProvider(UserDetailsService userDetailsService) {
+        return new SsoAuthenticationProvider(userDetailsService);
+    }
+
+    @Bean
     SsoCookieAuthenticationFilter cookieFilter(AuthenticationManager authenticationManager,
                                                SecurityContextRepository contextRepository,
                                                AuthenticationSuccessHandler successHandler,
@@ -235,12 +240,13 @@ public class JdbcAuthServerConfig {
     }
 
     @Bean("securityObjectMapper")
-    public JsonMapper securityObjectMapper() {
+    public ObjectMapper securityObjectMapper() {
+        ObjectMapper objectMapper = new ObjectMapper();
         ClassLoader classLoader = JdbcAuthServerConfig.class.getClassLoader();
-        return JsonMapper.builder()
-                .addModules(SecurityJacksonModules.getModules(classLoader))
-                .addModules(new OAuth2AuthorizationServerJacksonModule())
-                .build();
+        List<Module> securityModules = SecurityJackson2Modules.getModules(classLoader);
+        objectMapper.registerModules(securityModules);
+        objectMapper.registerModule(new OAuth2AuthorizationServerJackson2Module());
+        return objectMapper;
     }
 
     @Bean
