@@ -1,5 +1,8 @@
 package com.github.brane08.oauth2.server.service;
 
+import com.fasterxml.jackson.core.JacksonException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.brane08.oauth2.server.domain.CustomAuthorization;
 import com.github.brane08.oauth2.server.repository.CustomAuthorizationRepository;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -21,9 +24,6 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
-import tools.jackson.core.JacksonException;
-import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Instant;
 import java.util.Map;
@@ -39,9 +39,9 @@ public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationServic
     private final CustomAuthorizationRepository authorizationRepository;
     private final RegisteredClientRepository registeredClientRepository;
     private final JdbcAggregateTemplate aggregateTemplate;
-    private final JsonMapper securityObjectMapper;
+    private final ObjectMapper securityObjectMapper;
 
-    public JdbcOAuth2AuthorizationService(@Qualifier("securityObjectMapper") JsonMapper securityObjectMapper,
+    public JdbcOAuth2AuthorizationService(@Qualifier("securityObjectMapper") ObjectMapper securityObjectMapper,
                                           CustomAuthorizationRepository authorizationRepository,
                                           RegisteredClientRepository registeredClientRepository,
                                           JdbcAggregateTemplate aggregateTemplate) {

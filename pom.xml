@@ -11,7 +11,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>4.0.1</version>
+    <version>3.5.9</version>
     <!-- lookup parent from repository -->
     <relativePath/>
   </parent>
@@ -20,8 +20,8 @@
     <maven.compiler.release>25</maven.compiler.release>
     <roject.build.sourceEncoding>UTF-8</roject.build.sourceEncoding>
 
-    <spring-boot.version>4.0.0</spring-boot.version>
-    <spring-cloud.version>2025.1.0</spring-cloud.version>
+    <spring-boot.version>3.5.9</spring-boot.version>
+    <spring-cloud.version>2025.0.1</spring-cloud.version>
   </properties>
 
   <modules>
@@ -31,6 +31,7 @@
     <module>sso-gateway-mvc</module>
     <module>sso-client1</module>
     <module>sso-client2</module>
+    <module>jdbc-auth-common</module>
   </modules>
 
   <build>

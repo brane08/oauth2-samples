@@ -12,8 +12,8 @@ public class RequestUtils {
 
     public static RequestMatcher getOauth2RequestMatcher() {
         return new OrRequestMatcher(
-                PathPatternRequestMatcher.pathPattern("/oauth2/authorize"),
-                PathPatternRequestMatcher.pathPattern("/.well-known/**")
+                PathPatternRequestMatcher.withDefaults().matcher("/oauth2/authorize"),
+                PathPatternRequestMatcher.withDefaults().matcher("/.well-known/**")
         );
     }
 }

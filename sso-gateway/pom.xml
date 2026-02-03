@@ -40,7 +40,7 @@
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-security-oauth2-client</artifactId>
+      <artifactId>spring-boot-starter-oauth2-client</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -51,9 +51,8 @@
       <artifactId>spring-boot-starter-data-mongodb-reactive</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.mongodb</groupId>
-      <artifactId>mongodb-spring-session</artifactId>
-      <version>4.0.0</version>
+      <groupId>org.springframework.session</groupId>
+      <artifactId>spring-session-data-mongodb</artifactId>
     </dependency>
 
     <dependency>

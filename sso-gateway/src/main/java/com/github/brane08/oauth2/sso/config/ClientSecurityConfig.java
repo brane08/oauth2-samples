@@ -1,5 +1,7 @@
 package com.github.brane08.oauth2.sso.config;
 
+import com.fasterxml.jackson.databind.Module;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.brane08.oauth2.sso.web.SsoCookieTransformationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,8 +10,8 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
-import org.springframework.security.jackson.SecurityJacksonModules;
-import org.springframework.security.oauth2.client.jackson.OAuth2ClientJacksonModule;
+import org.springframework.security.jackson2.SecurityJackson2Modules;
+import org.springframework.security.oauth2.client.jackson2.OAuth2ClientJackson2Module;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoders;
 import org.springframework.security.web.server.SecurityWebFilterChain;
@@ -21,9 +23,10 @@ import org.springframework.security.web.server.savedrequest.WebSessionServerRequ
 import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher;
 import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers;
 import org.springframework.web.server.adapter.ForwardedHeaderTransformer;
-import tools.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 
 import java.net.URI;
+import java.util.List;
 
 @Configuration
 @EnableWebFluxSecurity
@@ -69,12 +72,13 @@ public class ClientSecurityConfig {
     }
 
     @Bean("securityObjectMapper")
-    public JsonMapper securityObjectMapper() {
+    public ObjectMapper securityObjectMapper() {
+        ObjectMapper objectMapper = new ObjectMapper();
         ClassLoader classLoader = ClientSecurityConfig.class.getClassLoader();
-        return JsonMapper.builder()
-                .addModules(SecurityJacksonModules.getModules(classLoader))
-                .addModules(new OAuth2ClientJacksonModule())
-                .build();
+        List<Module> securityModules = SecurityJackson2Modules.getModules(classLoader);
+        objectMapper.registerModules(securityModules);
+        objectMapper.registerModule(new OAuth2ClientJackson2Module());
+        return objectMapper;
     }
 
     @Bean
