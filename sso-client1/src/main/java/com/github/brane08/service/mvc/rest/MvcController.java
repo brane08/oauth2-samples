@@ -1,8 +1,8 @@
 package com.github.brane08.service.mvc.rest;
 
-import com.github.brane08.service.mvc.rental.CountriesService;
-import com.github.brane08.service.mvc.rental.Country;
-import com.github.brane08.service.mvc.rental.CountryFilter;
+import com.github.brane08.pagila.contries.CountriesService;
+import com.github.brane08.pagila.contries.Country;
+import com.github.brane08.pagila.contries.CountryFilter;
 import io.github.wimdeblauwe.htmx.spring.boot.mvc.HxRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

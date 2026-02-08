@@ -1,4 +1,4 @@
-package com.github.brane08.service.mvc.config;
+package com.github.brane08.oauth2.vaadin.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,6 +14,7 @@ import javax.sql.DataSource;
 @Configuration
 @EnableJdbcRepositories(basePackages = {"com.github.brane08.pagila.contries"})
 public class JdbcDataConfig extends AbstractJdbcConfiguration {
+
     @Bean
     NamedParameterJdbcOperations namedParameterJdbcOperations(DataSource dataSource) {
         return new NamedParameterJdbcTemplate(dataSource);
