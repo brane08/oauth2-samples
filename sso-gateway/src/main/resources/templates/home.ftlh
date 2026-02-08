@@ -5,6 +5,6 @@
     <title>SSO Gateway Home</title>
 </head>
 <body>
-    <h1>This is gateway home page</h1>
+<h1>This is gateway home page</h1>
 </body>
 </html>

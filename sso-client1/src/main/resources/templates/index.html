@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <base href="/mvc/">
+  <link th:href="@{/webjars/bootstrap/5.3.3/css/bootstrap.min.css}" rel="stylesheet"/>
+  <script th:src="@{/webjars/htmx.org/2.0.3/dist/htmx.min.js}"></script>
+  <title>Demo</title>
+</head>
+<body class="container m-3">
+<div class="d-flex mt-3">
+  <form th:object="${filter}" hx-post="/mvc/countries/search" hx-target="#countries-container" hx-swap="innerHTML">
+    <input class="form-control" th:field="*{keyword}" placeholder="Search countries..."/>
+    <button class="btn btn-primary" type="submit">Filter</button>
+  </form>
+  <div id="countries-container">
+    <!-- Initial table from GET /countries -->
+  </div>
+</div>
+</body>
+</html>

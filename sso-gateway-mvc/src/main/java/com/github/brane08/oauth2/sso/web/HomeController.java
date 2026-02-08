@@ -9,18 +9,18 @@ import java.time.LocalDate;
 @Controller
 public class HomeController {
 
-	@ModelAttribute("year")
-	public String yearAttribute() {
-		return Integer.toString(LocalDate.now().getYear());
-	}
+    @ModelAttribute("year")
+    public String yearAttribute() {
+        return Integer.toString(LocalDate.now().getYear());
+    }
 
-	@GetMapping("/home")
-	public String home() {
-		return "home";
-	}
+    @GetMapping("/home")
+    public String home() {
+        return "home";
+    }
 
-	@GetMapping("/about")
-	public String about() {
-		return "about";
-	}
+    @GetMapping("/about")
+    public String about() {
+        return "about";
+    }
 }

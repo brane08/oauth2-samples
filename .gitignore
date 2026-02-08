@@ -6,13 +6,24 @@ target/
 
 ### IntelliJ IDEA ###
 .idea
+!.idea/codeStyles/codeStyleConfig.xml
+!.idea/codeStyles/Project.xml
 *.iws
 *.iml
 *.ipr
+/out/
+/output/
 
 ### VS Code ###
 .vscode/
 
+logs/
+
 .env
 
 /*.http
+
+.venv/
+
+certs/
+!certs/generate-certs.sh

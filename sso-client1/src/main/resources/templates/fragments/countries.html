@@ -1,0 +1,46 @@
+<table th:fragment="table(countries)" class="table table-striped">
+  <thead>
+  <tr>
+    <th>ID</th>
+    <th>Country <a th:href="@{/countries/search(size=10,sort=country,asc)}" hx-get>...</a></th>
+    <th>Last Update</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr th:each="country : ${countries.content}">
+    <td th:text="${country.countryId}"></td>
+    <td th:text="${country.country}"></td>
+    <td th:text="${#temporals.format(country.lastUpdate, 'yyyy-MM-dd HH:mm')}"></td>
+  </tr>
+  </tbody>
+</table>
+<nav th:fragment="pagination(countries, filter)" aria-label="Countries pagination">
+  <ul class="pagination">
+    <!-- Prev -->
+    <li class="page-item" th:classappend="${countries.first ? 'disabled' : ''}">
+      <a class="page-link"
+         th:href="@{/countries/search(page=${filter.page - 1}, size=${filter.size})}"
+         hx-get="@{/countries/search(page=${filter.page - 1}, size=${filter.size})}"
+         th:if="${not #lists.isEmpty(countries.content)}">Prev</a>
+    </li>
+
+    <!-- Pages -->
+    <li th:each="pageNum : ${#numbers.sequence(1, countries.totalPages)}"
+        class="page-item"
+        th:classappend="${pageNum == filter.page} ? 'active'">
+      <a class="page-link"
+         th:text="${pageNum}"
+         hx-get="@{/countries/search(page=${pageNum}, size=${filter.size})}"
+         th:href="@{/countries/search(page=${pageNum}, size=${filter.size})}"></a>
+    </li>
+
+    <!-- Next -->
+    <li class="page-item" th:classappend="${countries.last ? 'disabled' : ''}">
+      <a class="page-link"
+         hx-get="@{/countries/search(page=${filter.page + 1}, size=${filter.size})}"
+         th:href="@{/countries/search(page=${filter.page + 1}, size=${filter.size})}">Next</a>
+    </li>
+  </ul>
+  <small>Page <span th:text="${filter.page} + '/' + ${countries.totalPages}"></span>
+    (<span th:text="${countries.totalElements}"></span> total)</small>
+</nav>

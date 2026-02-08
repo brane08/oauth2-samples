@@ -1,30 +1,55 @@
 server:
+  address: 127.0.0.1
   port: 8081
   servlet:
     context-path: /mvc
+  ssl:
+    key-store-type: PKCS12
+    key-store: "${user.dir}/../certs/services.p12"
+    key-store-password: "changeit"
+    trust-store-type: JKS
+    trust-store: "${user.dir}/../certs/truststore.jks"
+    trust-store-password: "changeit"
+    enabled: true
+
 spring:
   application:
     name: sso-client1
   main:
     banner-mode: off
   datasource:
-    url: "jdbc:postgresql://localhost:5432/prore?currentSchema=oauth2"
+    url: "jdbc:postgresql://localhost:5432/sakila?currentSchema=public"
     driver-class-name: "org.postgresql.Driver"
     hikari:
-      pool-name: "auth-server-ds"
+      pool-name: "client1-ds"
       maximum-pool-size: 7
       minimum-idle: 1
+      auto-commit: false
     username: "postgres"
     password: ""
   jpa:
     open-in-view: false
-
+  thymeleaf:
+    cache: false
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: "http://localhost:8079/uaa"
+          issuer-uri: "https://auth.example.com:8077"
+  threads:
+    virtual:
+      enabled: true
+
 logging:
   level:
     root: info
     "org.springframework.security.web": info
+    "org.springframework.web": debug
+    "org.thymeleaf": debug
+
+management:
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
