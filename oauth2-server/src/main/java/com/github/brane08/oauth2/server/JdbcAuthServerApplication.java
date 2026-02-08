@@ -1,4 +1,4 @@
-package com.github.brane08.oauth2.sso;
+package com.github.brane08.oauth2.server;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -6,9 +6,9 @@ import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
 import org.springframework.data.jdbc.repository.config.EnableJdbcRepositories;
 
-@SpringBootApplication(exclude = {UserDetailsServiceAutoConfiguration.class, MongoAutoConfiguration.class})
+@SpringBootApplication(exclude = {MongoAutoConfiguration.class, UserDetailsServiceAutoConfiguration.class})
 @EnableJdbcRepositories(basePackages = {"com.github.brane08.oauth2.server.repository"})
-public class SsoGatewayMvcApplication {
+public class JdbcAuthServerApplication {
 
     static {
         System.setProperty("com.sun.net.ssl.checkRevocation", "false");
@@ -18,7 +18,7 @@ public class SsoGatewayMvcApplication {
     }
 
     public static void main(String[] args) {
-        SpringApplication.run(SsoGatewayMvcApplication.class, args);
+        SpringApplication.run(JdbcAuthServerApplication.class, args);
     }
 
 }

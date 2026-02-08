@@ -24,3 +24,6 @@ logs/
 /*.http
 
 .venv/
+
+certs/
+!certs/generate-certs.sh

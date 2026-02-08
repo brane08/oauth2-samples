@@ -33,6 +33,9 @@ DNS.1=sso.${BASE_DOMAIN}
 DNS.2=auth.${BASE_DOMAIN}
 DNS.3=gateway.${BASE_DOMAIN}
 DNS.4=localhost
+DNS.5=sso-client1
+DNS.6=sso-client2
+DNS.7=sso-client3
 IP.1=127.0.0.1
 EOF
 

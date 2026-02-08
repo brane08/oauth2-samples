@@ -1,8 +1,8 @@
 server:
   address: 127.0.0.1
-  port: 8081
+  port: 8083
   servlet:
-    context-path: /mvc
+    context-path: /vaadin
   ssl:
     key-store-type: PKCS12
     key-store: "${user.dir}/../certs/services.p12"
@@ -14,14 +14,14 @@ server:
 
 spring:
   application:
-    name: sso-client1
+    name: sso-client3
   main:
     banner-mode: off
   datasource:
     url: "jdbc:postgresql://localhost:5432/sakila?currentSchema=public"
     driver-class-name: "org.postgresql.Driver"
     hikari:
-      pool-name: "client1-ds"
+      pool-name: "client3-ds"
       maximum-pool-size: 7
       minimum-idle: 1
       auto-commit: false
@@ -29,8 +29,7 @@ spring:
     password: ""
   jpa:
     open-in-view: false
-  thymeleaf:
-    cache: false
+
   security:
     oauth2:
       resourceserver:
@@ -53,3 +52,8 @@ management:
       enabled: true
     readinessstate:
       enabled: true
+
+vaadin:
+  launch-browser: false
+  devmode:
+    usage-statistics: false

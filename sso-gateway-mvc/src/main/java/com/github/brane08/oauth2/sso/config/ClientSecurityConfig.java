@@ -50,7 +50,7 @@ public class ClientSecurityConfig {
             .cors(Customizer.withDefaults())
             .csrf(csrf -> csrf
                     .csrfTokenRepository(csrfRepo)
-                    .ignoringRequestMatchers("/mvc/**", "/flux/**"))
+                    .ignoringRequestMatchers("/mvc/**", "/flux/**", "/vaadin/**", "/actuator/**"))
             .addFilterAfter(ssoFilter, CorsFilter.class)
             .securityContext(context -> context.securityContextRepository(contextRepository))
             .requestCache(rc -> rc.requestCache(requestCache))
