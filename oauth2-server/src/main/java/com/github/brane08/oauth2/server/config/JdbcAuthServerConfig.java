@@ -6,7 +6,10 @@ import com.github.brane08.oauth2.server.filters.SsoCookieAuthenticationFilter;
 import com.github.brane08.oauth2.server.repository.AppUserRepository;
 import com.github.brane08.oauth2.server.service.LocalUserDetailsService;
 import com.github.brane08.oauth2.server.web.SsoAuthenticationProvider;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
@@ -19,6 +22,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
@@ -27,6 +31,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.encrypt.KeyStoreKeyFactory;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.jackson2.SecurityJackson2Modules;
@@ -165,13 +170,23 @@ public class JdbcAuthServerConfig {
     }
 
     @Bean
-    public JWKSource<SecurityContext> jwkSource() {
-        KeyPair keyPair = generateRsaKey();
+    public JWKSource<SecurityContext> jwkSource(@Value("${jwt.keystore-path}") String keystorePath,
+                                                @Value("${jwt.keystore-password}") String storePass,
+                                                @Value("${jwt.key-alias}") String alias,
+                                                @Value("${jwt.key-password}") String keyPass,
+                                                @Value("${jwt.key-id}") String keyId) {
+        KeyStoreKeyFactory keyStoreKeyFactory = new KeyStoreKeyFactory(new FileSystemResource(keystorePath),
+                storePass.toCharArray());
+        KeyPair keyPair = keyStoreKeyFactory.getKeyPair(alias, keyPass.toCharArray());
         RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
         RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
-        RSAKey rsaKey = new RSAKey.Builder(publicKey).privateKey(privateKey).keyID("sas-jwt-key-id").build();
-        JWKSet jwkSet = new JWKSet(rsaKey);
-        return new ImmutableJWKSet<>(jwkSet);
+        JWK jwk = new RSAKey.Builder(publicKey)
+                .privateKey(privateKey)
+                .keyID(keyId)
+                .keyUse(KeyUse.SIGNATURE)
+                .algorithm(JWSAlgorithm.RS256)
+                .build();
+        return new ImmutableJWKSet<>(new JWKSet(jwk));
     }
 
     @Bean

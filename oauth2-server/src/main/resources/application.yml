@@ -70,3 +70,10 @@ management:
 sas:
   use-redirect-in-filter: false
   gateway-url: https://sso.example.com:8040
+
+jwt:
+  keystore-path: "${user.dir}/../certs/jwt-key.jks"
+  keystore-password: "changeit"
+  key-alias: "sas-jwt-key"
+  key-password: "changeit"
+  key-id: "gateway-jwt-v1"

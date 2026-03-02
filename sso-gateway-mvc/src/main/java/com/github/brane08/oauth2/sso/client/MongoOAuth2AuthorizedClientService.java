@@ -1,5 +1,7 @@
 package com.github.brane08.oauth2.sso.client;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -11,14 +13,13 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
-import org.springframework.stereotype.Service;
 
-@Service
 public class MongoOAuth2AuthorizedClientService implements OAuth2AuthorizedClientService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(MongoOAuth2AuthorizedClientService.class);
 
     private final MongoTemplate mongoTemplate;
     private final ClientRegistrationRepository clientRepo;
-    private static final String COLLECTION = "oauth2_authorized_clients";
 
     public MongoOAuth2AuthorizedClientService(MongoTemplate mongoTemplate, ClientRegistrationRepository clientRepo) {
         this.mongoTemplate = mongoTemplate;
@@ -28,15 +29,19 @@ public class MongoOAuth2AuthorizedClientService implements OAuth2AuthorizedClien
     @Override
     @SuppressWarnings("unchecked")
     public <T extends OAuth2AuthorizedClient> T loadAuthorizedClient(String clientRegistrationId, String principalName) {
+        LOG.debug("Trying to load authorized client: {} -> {}", clientRegistrationId, principalName);
         Query query = new Query(Criteria.where("registrationId").is(clientRegistrationId).and("principalName").is(principalName));
         return (T) toAuthorizedClient(mongoTemplate.find(query, MongoAuthorizedClient.class).stream().findFirst().orElse(null));
     }
 
     @Override
     public void saveAuthorizedClient(OAuth2AuthorizedClient authorizedClient, Authentication principal) {
-        Query query = new Query(Criteria.where("registrationId").is(authorizedClient.getClientRegistration().getRegistrationId())
-                .and("principalName").is(principal.getName()));
+        String principalName = principal.getName();
+        String clientRegistrationId = authorizedClient.getClientRegistration().getRegistrationId();
+        Query query = new Query(Criteria.where("registrationId").is(clientRegistrationId)
+                .and("principalName").is(principalName));
         MongoAuthorizedClient client = fromAuthorizedClient(authorizedClient, principal);
+        LOG.debug("Trying to save authorized client: {} -> {}", clientRegistrationId, principalName);
         mongoTemplate.upsert(query, Update.update("tokenType", client.getTokenType())
                 .set("accessToken", client.getAccessToken())
                 .set("accessTokenIssuedAt", client.getAccessTokenIssuedAt())
@@ -48,6 +53,7 @@ public class MongoOAuth2AuthorizedClientService implements OAuth2AuthorizedClien
 
     @Override
     public void removeAuthorizedClient(String clientRegistrationId, String principalName) {
+        LOG.debug("Trying to remove authorized client: {} -> {}", clientRegistrationId, principalName);
         Query query = new Query(Criteria.where("registrationId").is(clientRegistrationId)
                 .and("principalName").is(principalName));
         mongoTemplate.findAllAndRemove(query, MongoAuthorizedClient.class);

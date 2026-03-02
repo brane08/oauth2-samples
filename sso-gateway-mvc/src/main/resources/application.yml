@@ -52,7 +52,7 @@ spring:
             client-id: "2e8347f2-ccac-4d03-bc2c-cc733ec4da10"
             client-secret: "secret"
             client-authentication-method: client_secret_basic
-            authorization-grant-type: authorization_code
+            authorization-grant-type: client_credentials
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             scope:
               - openid
@@ -79,7 +79,7 @@ spring:
               predicates:
                 - Path=/mvc/**
               filters:
-                - TokenRelay=
+                - TokenRelay=client-oidc
             - id: client2
               uri: https://sso-client2:8082
               predicates:
@@ -99,18 +99,18 @@ spring:
 logging:
   level:
     root: info
-    "org.springframework.cloud.gateway": info
-    "org.springframework.security": debug
-    "org.springframework.security.oauth2": debug
-    "org.springframework.security.oauth2.client": debug
+    "org.springframework.cloud.gateway": debug
+    "org.springframework.security": trace
+    "org.springframework.security.oauth2": trace
+    "org.springframework.security.oauth2.client": trace
     "org.springframework.security.oauth2.core.OAuth2TokenValidator": debug
-    "org.springframework.security.web": debug
+    "org.springframework.security.web": trace
     "org.springframework.security.web.context.HttpSessionSecurityContextRepository": debug
     "org.springframework.security.web.savedrequest.HttpSessionRequestCache": debug
     "org.springframework.web": info
     "org.springframework.web.client.RestTemplate": debug
 
-    "org.springframework.data.mongodb.core.MongoTemplate": info
+    "org.springframework.data.mongodb.core.MongoTemplate": debug
 
     "org.springframework.session": info
     "org.mongodb.spring.session": info
@@ -123,3 +123,11 @@ management:
       enabled: true
     readinessstate:
       enabled: true
+gateway:
+  base-url: https://sso.example.com:8040/
+jwt:
+  keystore-path: "${user.dir}/../certs/jwt-key.jks"
+  keystore-password: "changeit"
+  key-alias: "sas-jwt-key"
+  key-password: "changeit"
+  key-id: "gateway-jwt-v1"

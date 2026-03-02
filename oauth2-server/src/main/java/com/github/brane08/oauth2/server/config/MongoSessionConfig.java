@@ -11,7 +11,7 @@ import org.springframework.session.data.mongo.config.annotation.web.http.EnableM
 import java.util.concurrent.TimeUnit;
 
 @Configuration
-@EnableMongoHttpSession(maxInactiveIntervalInSeconds = 3600)
+@EnableMongoHttpSession(collectionName = "sas_sessions", maxInactiveIntervalInSeconds = 3600)
 public class MongoSessionConfig {
 
     @Bean

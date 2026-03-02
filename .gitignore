@@ -27,3 +27,4 @@ logs/
 
 certs/
 !certs/generate-certs.sh
+!certs/jwt-key.jks
