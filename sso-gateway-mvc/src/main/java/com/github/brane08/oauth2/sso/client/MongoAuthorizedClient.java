@@ -1,12 +1,14 @@
 package com.github.brane08.oauth2.sso.client;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
 import java.util.Set;
 
 @Document(collection = "oauth2_authorized_clients")
+@CompoundIndex(def = "{'registrationId': 1, 'principalName': 1}", unique = true)
 public class MongoAuthorizedClient {
     @Id
     private String id;

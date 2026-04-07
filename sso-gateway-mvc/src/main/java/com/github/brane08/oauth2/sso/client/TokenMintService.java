@@ -2,6 +2,7 @@ package com.github.brane08.oauth2.sso.client;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -25,19 +26,22 @@ public class TokenMintService {
 
     private static final Logger log = LoggerFactory.getLogger(TokenMintService.class);
 
-    private final RestTemplate restTemplate;  // For SSO validation
-    private final JwtEncoder jwtEncoder;     // For minting JWTs
-    private final JwtDecoder jwtDecoder;     // For SSO token validation (if JWT)
+    private final RestTemplate restTemplate;
+    private final JwtEncoder jwtEncoder;
+    private final JwtDecoder jwtDecoder;
+    private final String issuerUri;
 
     private static final String SSO_ISSUER = "https://auth.example.com:8077";
     private static final String SSO_USERINFO_ENDPOINT = SSO_ISSUER + "/userinfo";
 
     public TokenMintService(RestTemplateBuilder restTemplateBuilder,
                             JwtEncoder jwtEncoder,
-                            JwtDecoder jwtDecoder) {
+                            JwtDecoder jwtDecoder,
+                            @Value("${gateway.issuer-uri}") String issuerUri) {
         this.restTemplate = restTemplateBuilder.build();
         this.jwtEncoder = jwtEncoder;
         this.jwtDecoder = jwtDecoder;
+        this.issuerUri = issuerUri;
     }
 
     /**
@@ -71,15 +75,15 @@ public class TokenMintService {
         Instant expiresAt = now.plusSeconds(3600);  // 1 hour
 
         JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer("https://auth.example.com:8077")
+                .issuer(issuerUri)
                 .subject(userDetails.getUsername())
-                .audience(List.of("backend-services"))  // Your downstream services
+                .audience(List.of("backend-services"))
                 .issuedAt(now)
                 .expiresAt(expiresAt)
                 .claim("roles", userDetails.getAuthorities().stream()
                         .map(GrantedAuthority::getAuthority)
                         .collect(Collectors.toList()))
-                .claim("scope", "read write")  // Or from userDetails
+                .claim("scope", "read write")
                 .build();
 
         return jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
@@ -103,7 +107,7 @@ public class TokenMintService {
             if (response.getStatusCode().is2xxSuccessful()) {
                 UserInfoResponse userInfo = response.getBody();
                 User.UserBuilder builder = User.builder();
-                builder.username(userInfo.getSub()).authorities(AuthorityUtils.createAuthorityList("ROLE_USER"));
+                builder.username(userInfo.getSub()).password("").authorities(AuthorityUtils.createAuthorityList("ROLE_USER"));
                 return builder.build();
             }
         } catch (Exception e) {
@@ -126,6 +130,6 @@ public class TokenMintService {
                 (Collection<GrantedAuthority>) roles.stream().map(role -> (GrantedAuthority) () -> "ROLE_" + role)
                 : AuthorityUtils.createAuthorityList("ROLE_USER");
 
-        return User.builder().username(name).authorities(authorities).build();
+        return User.builder().username(name).password("").authorities(authorities).build();
     }
 }

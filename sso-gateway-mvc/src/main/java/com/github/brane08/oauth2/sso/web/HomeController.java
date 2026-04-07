@@ -2,6 +2,8 @@ package com.github.brane08.oauth2.sso.web;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +15,8 @@ import java.time.LocalDate;
 
 @Controller
 public class HomeController {
+
+    private static final Logger LOG = LoggerFactory.getLogger(HomeController.class);
 
     @ModelAttribute("year")
     public String yearAttribute() {
@@ -31,9 +35,10 @@ public class HomeController {
 
     @GetMapping("/")
     public String handleRoot(@RequestParam(required = false) String redirect,
-                                        HttpServletResponse res) {
-        // Validate/set SSO_TOKEN cookie (path=/ always visible)
+                             HttpServletResponse res) {
+        LOG.debug("Handling root request, redirect param: {}", redirect);
         if (redirect != null) {
+            LOG.debug("Handling root request, redirect param: {}", redirect);
             return "forward:" + redirect;
         }
         return "index";

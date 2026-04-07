@@ -35,15 +35,24 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: "https://auth.example.com:8077"
+          public-key-location: "file:${user.dir}/../certs/gateway-public.pem"
   threads:
     virtual:
       enabled: true
 
+gateway:
+  issuer-uri: "https://sso.example.com:8040"
+
 logging:
   level:
     root: info
-    "org.springframework.security.web": info
+    "org.springframework.security": debug
+    "org.springframework.security.oauth2": debug
+    "org.springframework.security.oauth2.jwt": trace
+    "org.springframework.security.oauth2.server.resource": trace
+    "org.springframework.security.oauth2.server.resource.authentication": trace
+    "org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationFilter": debug
+    "org.springframework.security.web": debug
     "org.springframework.web": debug
     "org.thymeleaf": debug
 

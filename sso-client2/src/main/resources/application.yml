@@ -21,7 +21,13 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: "https://auth.example.com:8077"
+          public-key-location: "file:${user.dir}/../certs/gateway-public.pem"
+  threads:
+    virtual:
+      enabled: true
+
+gateway:
+  issuer-uri: "https://sso.example.com:8040"
 
 logging:
   level:

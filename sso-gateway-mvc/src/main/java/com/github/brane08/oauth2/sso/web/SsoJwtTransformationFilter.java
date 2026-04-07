@@ -123,7 +123,7 @@ public class SsoJwtTransformationFilter extends OncePerRequestFilter {
             // Create and save OAuth2AuthorizedClient with user principal
             String accessToken = mintService.mintAccessToken(details);
             OAuth2AccessToken auth2AccessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, accessToken, Instant.now(),
-                    Instant.now().plus(4, ChronoUnit.HOURS), Set.of("openid", "profile", "email"));
+                    Instant.now().plus(4, ChronoUnit.HOURS), Set.of("read", "write"));
             ClientRegistration registration = clientRepo.findByRegistrationId(CLIENT_REG_ID);
             OAuth2AuthorizedClient authorizedClient = new OAuth2AuthorizedClient(
                     registration, authentication.getName(), auth2AccessToken, null);

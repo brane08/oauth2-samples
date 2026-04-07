@@ -1,21 +1,27 @@
 package com.github.brane08.oauth2.vaadin.config;
 
 import com.vaadin.flow.spring.security.VaadinSecurityConfigurer;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.converter.RsaKeyConverters;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtValidators;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
-import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
+import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +56,15 @@ public class Client3SecurityConfig {
         conf.enableAuthorizedRequestsConfiguration(false);  // Skip its anyRequest()
         http.with(conf, Customizer.withDefaults());
         return http.build();
+    }
+
+    @Bean
+    JwtDecoder jwtDecoder(@Value("${gateway.issuer-uri}") String issuerUri,
+                          @Value("${spring.security.oauth2.resourceserver.jwt.public-key-location}") Resource keyLocation) throws Exception {
+        RSAPublicKey publicKey = (RSAPublicKey) RsaKeyConverters.x509().convert(keyLocation.getInputStream());
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withPublicKey(publicKey).build();
+        decoder.setJwtValidator(JwtValidators.createDefaultWithIssuer(issuerUri));
+        return decoder;
     }
 
     JwtAuthenticationConverter jwtAuthenticationConverter() {

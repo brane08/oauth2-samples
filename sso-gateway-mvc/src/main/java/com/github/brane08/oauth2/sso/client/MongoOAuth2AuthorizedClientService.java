@@ -31,7 +31,7 @@ public class MongoOAuth2AuthorizedClientService implements OAuth2AuthorizedClien
     public <T extends OAuth2AuthorizedClient> T loadAuthorizedClient(String clientRegistrationId, String principalName) {
         LOG.debug("Trying to load authorized client: {} -> {}", clientRegistrationId, principalName);
         Query query = new Query(Criteria.where("registrationId").is(clientRegistrationId).and("principalName").is(principalName));
-        return (T) toAuthorizedClient(mongoTemplate.find(query, MongoAuthorizedClient.class).stream().findFirst().orElse(null));
+        return (T) toAuthorizedClient(mongoTemplate.findOne(query, MongoAuthorizedClient.class));
     }
 
     @Override
@@ -56,7 +56,7 @@ public class MongoOAuth2AuthorizedClientService implements OAuth2AuthorizedClien
         LOG.debug("Trying to remove authorized client: {} -> {}", clientRegistrationId, principalName);
         Query query = new Query(Criteria.where("registrationId").is(clientRegistrationId)
                 .and("principalName").is(principalName));
-        mongoTemplate.findAllAndRemove(query, MongoAuthorizedClient.class);
+        mongoTemplate.remove(query, MongoAuthorizedClient.class);
     }
 
     OAuth2AuthorizedClient toAuthorizedClient(MongoAuthorizedClient doc) {
@@ -64,12 +64,17 @@ public class MongoOAuth2AuthorizedClientService implements OAuth2AuthorizedClien
             return null;
         }
         ClientRegistration registration = clientRepo.findByRegistrationId(doc.getRegistrationId());
-        OAuth2AccessToken.TokenType tokenType = null;
-        if (OAuth2AccessToken.TokenType.BEARER.getValue().equalsIgnoreCase(doc.getTokenType())) {
-            tokenType = OAuth2AccessToken.TokenType.BEARER;
+        if (registration == null) {
+            LOG.warn("No client registration found for id '{}', discarding stored token for principal '{}'",
+                    doc.getRegistrationId(), doc.getPrincipalName());
+            return null;
         }
-        OAuth2AccessToken accessToken = new OAuth2AccessToken(tokenType, doc.getAccessToken(), doc.getAccessTokenIssuedAt(),
-                doc.getAccessTokenExpiresAt(), doc.getAccessTokenScopes());
+        if (!OAuth2AccessToken.TokenType.BEARER.getValue().equalsIgnoreCase(doc.getTokenType())) {
+            LOG.warn("Unexpected token type '{}' for principal '{}', discarding", doc.getTokenType(), doc.getPrincipalName());
+            return null;
+        }
+        OAuth2AccessToken accessToken = new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, doc.getAccessToken(),
+                doc.getAccessTokenIssuedAt(), doc.getAccessTokenExpiresAt(), doc.getAccessTokenScopes());
         OAuth2RefreshToken refreshToken = doc.getRefreshToken() != null ?
                 new OAuth2RefreshToken(doc.getRefreshToken(), doc.getRefreshTokenIssuedAt()) : null;
         return new OAuth2AuthorizedClient(registration, doc.getPrincipalName(), accessToken, refreshToken);

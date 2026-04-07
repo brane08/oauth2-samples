@@ -11,7 +11,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.5.11</version>
+    <version>3.5.13</version>
     <!-- lookup parent from repository -->
     <relativePath/>
   </parent>
@@ -20,7 +20,7 @@
     <maven.compiler.release>25</maven.compiler.release>
     <roject.build.sourceEncoding>UTF-8</roject.build.sourceEncoding>
 
-    <spring-boot.version>3.5.11</spring-boot.version>
+    <spring-boot.version>3.5.13</spring-boot.version>
     <spring-cloud.version>2025.0.1</spring-cloud.version>
   </properties>
 

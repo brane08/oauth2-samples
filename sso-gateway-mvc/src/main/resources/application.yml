@@ -40,6 +40,9 @@ spring:
       minimum-idle: 1
     username: "postgres"
     password: ""
+  data:
+    mongodb:
+      auto-index-creation: true
   mvc:
     view:
       prefix: "/WEB-INF/jsp/"
@@ -53,10 +56,9 @@ spring:
             client-secret: "secret"
             client-authentication-method: client_secret_basic
             authorization-grant-type: client_credentials
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             scope:
-              - openid
-              - profile
+              - read
+              - write
         provider:
           client-oidc:
             #            issuer-uri: "http://localhost:8077"
@@ -73,7 +75,7 @@ spring:
               predicates:
                 - Path=/user**
               filters:
-                - TokenRelay=
+                - TokenRelay=client-oidc
             - id: client1
               uri: https://sso-client1:8081
               predicates:
@@ -85,13 +87,13 @@ spring:
               predicates:
                 - Path=/flux/**
               filters:
-                - TokenRelay=
+                - TokenRelay=client-oidc
             - id: client3
               uri: https://sso-client3:8083
               predicates:
                 - Path=/vaadin/**
               filters:
-                - TokenRelay=
+                - TokenRelay=client-oidc
   threads:
     virtual:
       enabled: true
@@ -100,21 +102,19 @@ logging:
   level:
     root: info
     "org.springframework.cloud.gateway": debug
-    "org.springframework.security": trace
-    "org.springframework.security.oauth2": trace
-    "org.springframework.security.oauth2.client": trace
+    "org.springframework.security": debug
+    "org.springframework.security.oauth2": debug
+    "org.springframework.security.oauth2.client": debug
     "org.springframework.security.oauth2.core.OAuth2TokenValidator": debug
-    "org.springframework.security.web": trace
+    "org.springframework.security.web": debug
     "org.springframework.security.web.context.HttpSessionSecurityContextRepository": debug
     "org.springframework.security.web.savedrequest.HttpSessionRequestCache": debug
     "org.springframework.web": info
     "org.springframework.web.client.RestTemplate": debug
-
-    "org.springframework.data.mongodb.core.MongoTemplate": debug
-
+    "org.springframework.data.mongodb.core.MongoTemplate": info
     "org.springframework.session": info
-    "org.mongodb.spring.session": info
-
+    "org.mongodb": warn
+    "com.mongodb": warn
     "com.github.brane08.oauth2.sso": debug
 
 management:
@@ -125,6 +125,7 @@ management:
       enabled: true
 gateway:
   base-url: https://sso.example.com:8040/
+  issuer-uri: https://sso.example.com:8040
 jwt:
   keystore-path: "${user.dir}/../certs/jwt-key.jks"
   keystore-password: "changeit"

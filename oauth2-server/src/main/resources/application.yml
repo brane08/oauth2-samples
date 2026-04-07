@@ -58,6 +58,8 @@ logging:
     "org.springframework.security.oauth2.core": debug
     "org.springframework.data.mongodb": info
     "org.springframework.session.mongodb": info
+    "org.mongodb": warn
+    "com.mongodb": warn
     "com.github.brane08.oauth2.server": debug
 
 management:

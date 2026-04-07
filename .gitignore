@@ -17,6 +17,7 @@ target/
 ### VS Code ###
 .vscode/
 
+.DS_Store
 logs/
 
 .env
@@ -28,3 +29,5 @@ logs/
 certs/
 !certs/generate-certs.sh
 !certs/jwt-key.jks
+
+.claude/

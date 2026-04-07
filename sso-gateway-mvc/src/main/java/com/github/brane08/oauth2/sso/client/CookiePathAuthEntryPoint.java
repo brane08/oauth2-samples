@@ -37,7 +37,11 @@ public class CookiePathAuthEntryPoint implements AuthenticationEntryPoint {
         log.debug("AuthEntryPoint: targetUrl={}, hasCookie={}", targetUrl, hasCookie);
         if (!hasCookie && !targetUrl.equals(rootPath)) {
             // Redirect to root to set cookie
-            String redirectToRoot = rootPath + "?redirect=" + URLEncoder.encode(targetUrl, StandardCharsets.UTF_8);
+            String redirectPart = "";
+            if (!"/".equalsIgnoreCase(targetUrl)) {
+                redirectPart = "?redirect=" + URLEncoder.encode(targetUrl, StandardCharsets.UTF_8);
+            }
+            String redirectToRoot = rootPath + redirectPart;
             log.debug("AuthEntryPoint: redirectToRoot={}", redirectToRoot);
             res.sendRedirect(redirectToRoot);
             return;

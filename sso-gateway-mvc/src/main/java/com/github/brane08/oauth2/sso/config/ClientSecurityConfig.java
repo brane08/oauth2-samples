@@ -82,7 +82,7 @@ public class ClientSecurityConfig {
             .requestCache(rc -> rc.requestCache(requestCache))
 //            .addFilterBefore(new SsoCookieTransformationFilter(), AnonymousAuthenticationFilter.class)
             .authorizeHttpRequests(ae -> ae
-                    .requestMatchers("/actuator/**", "/logout", "/oauth2/**","/about", "/home", "/default.html").permitAll()
+                    .requestMatchers("/actuator/**", "/logout", "/oauth2/**", "/about", "/home", "/default.html").permitAll()
                     .requestMatchers(staticResourcesMatcher).permitAll()
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                     .anyRequest().authenticated())
