@@ -1,7 +1,7 @@
 package com.github.brane08.service.mvc.rest;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import com.github.brane08.pagila.contries.CountriesService;
 import com.github.brane08.pagila.contries.Country;
 import org.springframework.data.domain.Page;

@@ -1,8 +1,8 @@
 package com.github.brane08.oauth2.server.service;
 
-import com.fasterxml.jackson.core.JacksonException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import com.github.brane08.oauth2.server.domain.CustomAuthorization;
 import com.github.brane08.oauth2.server.repository.CustomAuthorizationRepository;
 import org.springframework.beans.factory.annotation.Qualifier;

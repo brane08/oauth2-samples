@@ -1,7 +1,7 @@
 package com.github.brane08.oauth2.server.config;
 
-import com.fasterxml.jackson.databind.Module;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.github.brane08.oauth2.server.filters.SsoCookieAuthenticationFilter;
 import com.github.brane08.oauth2.server.repository.AppUserRepository;
 import com.github.brane08.oauth2.server.service.LocalUserDetailsService;
@@ -29,14 +29,14 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.jackson2.SecurityJackson2Modules;
+import org.springframework.security.jackson.SecurityJacksonModules;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
-import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
-import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
-import org.springframework.security.oauth2.server.authorization.jackson2.OAuth2AuthorizationServerJackson2Module;
+import org.springframework.security.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
+import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
+import org.springframework.security.oauth2.server.authorization.jackson.OAuth2AuthorizationServerJacksonModule;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
@@ -242,12 +242,11 @@ public class JdbcAuthServerConfig {
 
     @Bean("securityObjectMapper")
     public ObjectMapper securityObjectMapper() {
-        ObjectMapper objectMapper = new ObjectMapper();
         ClassLoader classLoader = JdbcAuthServerConfig.class.getClassLoader();
-        List<Module> securityModules = SecurityJackson2Modules.getModules(classLoader);
-        objectMapper.registerModules(securityModules);
-        objectMapper.registerModule(new OAuth2AuthorizationServerJackson2Module());
-        return objectMapper;
+        return JsonMapper.builder()
+                .addModules(SecurityJacksonModules.getModules(classLoader))
+                .addModule(new OAuth2AuthorizationServerJacksonModule())
+                .build();
     }
 
     @Bean

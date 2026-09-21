@@ -1,7 +1,7 @@
 package com.github.brane08.oauth2.server.repository.jdbc;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import com.github.brane08.oauth2.server.domain.CustomRegisteredClient;
 import com.github.brane08.oauth2.server.repository.CustomRegisteredClientRepository;
 import jakarta.annotation.PostConstruct;

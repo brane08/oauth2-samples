@@ -2,7 +2,7 @@ package com.github.brane08.oauth2.sso;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
+import org.springframework.boot.mongodb.autoconfigure.MongoAutoConfiguration;
 
 @SpringBootApplication(exclude = {MongoAutoConfiguration.class})
 public class SsoGatewayApplication {
