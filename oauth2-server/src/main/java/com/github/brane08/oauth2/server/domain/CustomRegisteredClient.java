@@ -28,6 +28,8 @@ public class CustomRegisteredClient implements Serializable {
     private String authorizationGrantTypes;
     @Column("redirect_uris")
     private String redirectUris;
+    @Column("post_logout_redirect_uris")
+    private String postLogoutRedirectUris;
     @Column("scopes")
     private String scopes;
     @Column("client_settings")
@@ -105,6 +107,14 @@ public class CustomRegisteredClient implements Serializable {
 
     public void setRedirectUris(String redirectUris) {
         this.redirectUris = redirectUris;
+    }
+
+    public String getPostLogoutRedirectUris() {
+        return postLogoutRedirectUris;
+    }
+
+    public void setPostLogoutRedirectUris(String postLogoutRedirectUris) {
+        this.postLogoutRedirectUris = postLogoutRedirectUris;
     }
 
     public String getScopes() {

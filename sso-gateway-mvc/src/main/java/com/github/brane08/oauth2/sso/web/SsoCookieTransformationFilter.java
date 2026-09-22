@@ -31,11 +31,11 @@ public class SsoCookieTransformationFilter extends OncePerRequestFilter {
         }
         request.setAttribute("sso_cookie_processed", true);
 
-//        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-//        if (auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)) {
-//            filterChain.doFilter(request, response);
-//            return;
-//        }
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         processSsoCookie(request, response, filterChain);
     }
@@ -80,6 +80,8 @@ public class SsoCookieTransformationFilter extends OncePerRequestFilter {
     private boolean shouldSkip(HttpServletRequest request) {
         String path = request.getRequestURI();
         return request.getAttribute("sso_cookie_processed") != null ||
-                "OPTIONS".equals(request.getMethod());
+                "OPTIONS".equals(request.getMethod()) ||
+                path.startsWith("/oauth2/") ||    // Skip auth flows
+                path.startsWith("/login/");       // Skip login/callback
     }
 }

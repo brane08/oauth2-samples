@@ -100,19 +100,14 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
                 .redirectUri("https://sso.example.com:8040/login/oauth2/code/client-oidc")
                 .redirectUri("https://sso.example.com:8040/oauth2/code/client-oidc")
                 .redirectUri("https://sso.example.com:8040/authorized")
-                .redirectUri("http://localhost:8078/login/oauth2/code/client-oidc")
-                .redirectUri("http://localhost:8078/oauth2/code/client-oidc")
-                .redirectUri("http://localhost:8078/callback")
-                .redirectUri("http://localhost:8078/authorized")
-                .redirectUri("http://localhost:8077/login/oauth2/code/client-oidc")
-                .redirectUri("http://localhost:8077/oauth2/code/client-oidc")
-                .redirectUri("http://localhost:8077/callback")
-                .redirectUri("http://localhost:8077/authorized")
                 .postLogoutRedirectUri("https://sso.example.com:8040/logout")
                 .scope(OidcScopes.OPENID)
                 .scope(OidcScopes.PROFILE)
                 .tokenSettings(tokenSettings)
-                .clientSettings(ClientSettings.builder().requireAuthorizationConsent(false).build())
+                .clientSettings(ClientSettings.builder()
+                        .requireAuthorizationConsent(false)
+                        .requireProofKey(true)
+                        .build())
                 .build();
         this.save(registeredClient);
         log.info("Default client not found, added again with ID: {}", DEFAULT_CLIENT_ID);
@@ -121,7 +116,12 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
     @Override
     public void save(RegisteredClient registeredClient) {
         Assert.notNull(registeredClient, "registeredClient cannot be null");
-        this.aggregateTemplate.insert(toEntity(registeredClient));
+        CustomRegisteredClient entity = toEntity(registeredClient);
+        if (this.clientRepository.existsById(entity.getId())) {
+            this.aggregateTemplate.update(entity);
+        } else {
+            this.aggregateTemplate.insert(entity);
+        }
     }
 
     @Override
@@ -143,6 +143,8 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
                 client.getAuthorizationGrantTypes());
         Set<String> redirectUris = StringUtils.commaDelimitedListToSet(
                 client.getRedirectUris());
+        Set<String> postLogoutRedirectUris = StringUtils.commaDelimitedListToSet(
+                client.getPostLogoutRedirectUris());
         Set<String> clientScopes = StringUtils.commaDelimitedListToSet(
                 client.getScopes());
 
@@ -159,6 +161,7 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
                         authorizationGrantTypes.forEach(grantType ->
                                 grantTypes.add(resolveAuthorizationGrantType(grantType))))
                 .redirectUris((uris) -> uris.addAll(redirectUris))
+                .postLogoutRedirectUris((uris) -> uris.addAll(postLogoutRedirectUris))
                 .scopes((scopes) -> scopes.addAll(clientScopes));
 
         Map<String, Object> clientSettingsMap = parseMap(client.getClientSettings());
@@ -189,6 +192,7 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
         entity.setClientAuthenticationMethods(StringUtils.collectionToCommaDelimitedString(clientAuthenticationMethods));
         entity.setAuthorizationGrantTypes(StringUtils.collectionToCommaDelimitedString(authorizationGrantTypes));
         entity.setRedirectUris(StringUtils.collectionToCommaDelimitedString(registeredClient.getRedirectUris()));
+        entity.setPostLogoutRedirectUris(StringUtils.collectionToCommaDelimitedString(registeredClient.getPostLogoutRedirectUris()));
         entity.setScopes(StringUtils.collectionToCommaDelimitedString(registeredClient.getScopes()));
         entity.setClientSettings(writeMap(registeredClient.getClientSettings().getSettings()));
         entity.setTokenSettings(writeMap(registeredClient.getTokenSettings().getSettings()));
