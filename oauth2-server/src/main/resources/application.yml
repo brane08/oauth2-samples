@@ -1,6 +1,7 @@
 server:
   address: 127.0.0.1
   port: 8077
+  forward-headers-strategy: framework
   ssl:
     key-store-type: PKCS12
     key-store: "${user.dir}/../certs/services.p12"
@@ -14,7 +15,7 @@ server:
       timeout: 30m
       cookie:
         http-only: true
-        secure: false
+        secure: true
         same-site: lax
         name: "AUTHSESSIONID"
   tomcat:
@@ -70,3 +71,4 @@ management:
 sas:
   use-redirect-in-filter: false
   gateway-url: https://sso.example.com:8040
+  issuer: https://auth.example.com:8077
