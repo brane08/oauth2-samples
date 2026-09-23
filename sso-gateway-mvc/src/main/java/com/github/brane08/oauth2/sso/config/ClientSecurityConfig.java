@@ -2,7 +2,9 @@ package com.github.brane08.oauth2.sso.config;
 
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
+import com.github.brane08.oauth2.sso.web.PingPreAuthenticationFilter;
 import com.github.brane08.oauth2.sso.web.SsoCookieTransformationFilter;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -15,6 +17,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
@@ -43,7 +46,8 @@ public class ClientSecurityConfig {
                                            AuthenticationSuccessHandler successHandler,
                                            SecurityContextRepository contextRepository,
                                            JwtDecoder jwtDecoder,
-                                           SsoCookieTransformationFilter ssoFilter) throws Exception {
+                                           SsoCookieTransformationFilter ssoFilter,
+                                           ObjectProvider<PingPreAuthenticationFilter> pingPreAuthFilterProvider) throws Exception {
         var csrfRepo = CookieCsrfTokenRepository.withHttpOnlyFalse();
         csrfRepo.setCookiePath("/");
         // @formatter:off
@@ -55,9 +59,8 @@ public class ClientSecurityConfig {
             .addFilterAfter(ssoFilter, CorsFilter.class)
             .securityContext(context -> context.securityContextRepository(contextRepository))
             .requestCache(rc -> rc.requestCache(requestCache))
-//            .addFilterBefore(new SsoCookieTransformationFilter(), AnonymousAuthenticationFilter.class)
             .authorizeHttpRequests(ae -> ae
-                    .requestMatchers("/actuator/**", "/logout", "/oauth2/**","/about", "/home", "/default.html").permitAll()
+                    .requestMatchers("/actuator/**", "/logout", "/oauth2/**","/about", "/home", "/default.html", "/favicon.ico").permitAll()
                     .requestMatchers(staticResourcesMatcher).permitAll()
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                     .anyRequest().authenticated())
@@ -65,6 +68,10 @@ public class ClientSecurityConfig {
             .oauth2Client(Customizer.withDefaults())
             .oauth2ResourceServer(o2r -> o2r.jwt(jwt -> jwt.decoder(jwtDecoder)));
         // @formatter:on
+        PingPreAuthenticationFilter pingFilter = pingPreAuthFilterProvider.getIfAvailable();
+        if (pingFilter != null) {
+            http.addFilterBefore(pingFilter, AnonymousAuthenticationFilter.class);
+        }
         return http.build();
     }
 
@@ -104,7 +111,7 @@ public class ClientSecurityConfig {
 
     @Bean
     JwtDecoder jwtDecoder(RestTemplate restTemplate) {
-        var issuer = "https://auth.example.com:8077";
+        var issuer = "https://auth.example.local:8077";
         var decoder = NimbusJwtDecoder.withJwkSetUri(issuer + "/oauth2/jwks").restOperations(restTemplate).build();
         decoder.setJwtValidator(JwtValidators.createDefaultWithIssuer(issuer));
         return decoder;

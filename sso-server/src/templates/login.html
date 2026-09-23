@@ -11,8 +11,8 @@
   <p style="color:red">{{ error }}</p>
 {% endif %}
 <form method="POST" action="/login?redirect={{ redirect }}">
-  <label>Username: <input type="text" name="username" required></label><br><br>
-  <label>Password: <input type="password" name="password" required></label><br><br>
+  <label>Username: <input type="text" name="username" value="user1" required></label><br><br>
+  <label>Password: <input type="password" name="password" value="password" required></label><br><br>
   <button type="submit">Login</button>
 </form>
 </body>

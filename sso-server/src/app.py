@@ -1,12 +1,14 @@
 import datetime
+from pathlib import Path
 
 import jwt
-from flask import Flask, request, redirect, render_template, make_response, Response
+from flask import Flask, request, redirect, render_template, make_response, Response, send_from_directory
 
 app = Flask(__name__)
 
 SECRET_KEY = "XLxwEzxLmowhWCuOSzSQrm6GoI0PJFByD08n4XYs+f8XtZMh6ioy7fzzgmCRmjQK"
 ALGORITHM = "HS256"
+COOKIE_DOMAIN = "example.local"
 
 # Fake user DB
 USERS = {"user1": "password", "user2": "password"}
@@ -25,20 +27,30 @@ def _build_token_cookie(service_url: str, username: str) -> Response:
 
     # Set cookie
     resp = make_response(redirect(service_url))
-    resp.set_cookie("SSO_TOKEN", token, httponly=True, secure=False, samesite='Lax')
+    resp.set_cookie("SSO_TOKEN", token, domain=COOKIE_DOMAIN, httponly=True, secure=True, samesite='Lax')
     return resp
 
 
 def _build_simple_cookie(service_url: str, username: str) -> Response:
     # Set cookie
     resp = make_response(redirect(service_url))
-    resp.set_cookie("SSO_TOKEN", username, httponly=True, secure=False, samesite='Lax')
+    resp.set_cookie("SSO_TOKEN", username, domain=COOKIE_DOMAIN, httponly=True, secure=True, samesite='Lax')
     return resp
+
+
+@app.route("/")
+def index():
+    return redirect("/login")
+
+
+@app.route("/favicon.ico")
+def favicon():
+    return send_from_directory(app.static_folder, "favicon.ico", mimetype="image/vnd.microsoft.icon")
 
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    service_url = request.args.get("redirect", "http://localhost:8078/mvc")
+    service_url = request.args.get("redirect", "https://gateway.example.local:8078/mvc")
 
     if request.method == "POST":
         username = request.form.get("username")
@@ -64,4 +76,5 @@ def validate():
 
 
 if __name__ == "__main__":
-    app.run(port=5000, debug=True)
+    certs = Path(__file__).resolve().parents[2] / "certs"
+    app.run(port=5000, debug=True, ssl_context=(str(certs / "services.crt"), str(certs / "services.key")))

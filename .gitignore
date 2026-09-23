@@ -27,3 +27,5 @@ logs/
 
 certs/
 !certs/generate-certs.sh
+.run/
+*.har

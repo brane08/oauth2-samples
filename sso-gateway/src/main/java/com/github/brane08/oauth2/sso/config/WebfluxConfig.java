@@ -43,7 +43,7 @@ public class WebfluxConfig {
     @Bean
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration config = new CorsConfiguration();
-        config.addAllowedOriginPattern("https://*.example.com");
+        config.addAllowedOriginPattern("https://*.example.local");
         config.setAllowCredentials(true);
         config.addAllowedMethod("*");
         config.addAllowedHeader("*");

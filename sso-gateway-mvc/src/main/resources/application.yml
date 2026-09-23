@@ -50,7 +50,7 @@ spring:
         registration:
           client-oidc:
             client-id: "2e8347f2-ccac-4d03-bc2c-cc733ec4da10"
-            client-secret: "secret"
+            client-secret: "${DEFAULT_CLIENT_SECRET}"
             client-authentication-method: client_secret_basic
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
@@ -60,16 +60,16 @@ spring:
         provider:
           client-oidc:
             #            issuer-uri: "http://localhost:8077"
-            authorization-uri: "https://auth.example.com:8077/oauth2/authorize"
-            token-uri: "https://auth.example.com:8077/oauth2/token"
-            jwk-set-uri: "https://auth.example.com:8077/oauth2/jwks"
+            authorization-uri: "https://auth.example.local:8077/oauth2/authorize"
+            token-uri: "https://auth.example.local:8077/oauth2/token"
+            jwk-set-uri: "https://auth.example.local:8077/oauth2/jwks"
   cloud:
     gateway:
       server:
         webmvc:
           routes:
             - id: userinfo
-              uri: https://auth.example.com:8077
+              uri: https://auth.example.local:8077
               predicates:
                 - Path=/user**
               filters:

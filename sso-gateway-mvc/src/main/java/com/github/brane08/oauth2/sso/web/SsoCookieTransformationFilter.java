@@ -54,7 +54,7 @@ public class SsoCookieTransformationFilter extends OncePerRequestFilter {
             gatewayCookie.setPath("/");
             gatewayCookie.setHttpOnly(true);
             gatewayCookie.setSecure(true);
-            gatewayCookie.setDomain("example.com");
+            gatewayCookie.setDomain("example.local");
             gatewayCookie.setAttribute("SameSite", "None");
             response.addCookie(gatewayCookie);
         }

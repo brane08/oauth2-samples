@@ -8,6 +8,7 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -40,15 +41,19 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
     private final JdbcAggregateTemplate aggregateTemplate;
     private final ObjectMapper securityObjectMapper;
     private final PasswordEncoder encoder;
+    private final String defaultClientSecret;
 
     public JdbcRegisteredClientRepository(@Qualifier("securityObjectMapper") ObjectMapper securityObjectMapper,
                                           CustomRegisteredClientRepository clientRepository,
-                                          JdbcAggregateTemplate aggregateTemplate, PasswordEncoder encoder) {
+                                          JdbcAggregateTemplate aggregateTemplate, PasswordEncoder encoder,
+                                          @Value("${sas.default-client-secret}") String defaultClientSecret) {
         Assert.notNull(clientRepository, "clientRepository cannot be null");
+        Assert.hasText(defaultClientSecret, "sas.default-client-secret must be set (e.g. via DEFAULT_CLIENT_SECRET env var)");
         this.securityObjectMapper = securityObjectMapper;
         this.clientRepository = clientRepository;
         this.aggregateTemplate = aggregateTemplate;
         this.encoder = encoder;
+        this.defaultClientSecret = defaultClientSecret;
     }
 
     private static AuthorizationGrantType resolveAuthorizationGrantType(String authorizationGrantType) {
@@ -87,20 +92,20 @@ public class JdbcRegisteredClientRepository implements RegisteredClientRepositor
         RegisteredClient registeredClient = RegisteredClient.withId(DEFAULT_CLIENT_ID)
                 .clientId(DEFAULT_CLIENT_ID)
                 .clientName("custom-sso-client")
-                .clientSecret(encoder.encode("secret"))
+                .clientSecret(encoder.encode(defaultClientSecret))
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .clientIdIssuedAt(Instant.now())
                 .clientSecretExpiresAt(Instant.now().plus(Duration.ofDays(365 * 2)))
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
                 .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-                .redirectUri("https://gateway.example.com:8078/login/oauth2/code/client-oidc")
-                .redirectUri("https://gateway.example.com:8078/oauth2/code/client-oidc")
-                .redirectUri("https://gateway.example.com:8078/authorized")
-                .redirectUri("https://sso.example.com:8040/login/oauth2/code/client-oidc")
-                .redirectUri("https://sso.example.com:8040/oauth2/code/client-oidc")
-                .redirectUri("https://sso.example.com:8040/authorized")
-                .postLogoutRedirectUri("https://sso.example.com:8040/logout")
+                .redirectUri("https://gateway.example.local:8078/login/oauth2/code/client-oidc")
+                .redirectUri("https://gateway.example.local:8078/oauth2/code/client-oidc")
+                .redirectUri("https://gateway.example.local:8078/authorized")
+                .redirectUri("https://sso.example.local:8040/login/oauth2/code/client-oidc")
+                .redirectUri("https://sso.example.local:8040/oauth2/code/client-oidc")
+                .redirectUri("https://sso.example.local:8040/authorized")
+                .postLogoutRedirectUri("https://sso.example.local:8040/logout")
                 .scope(OidcScopes.OPENID)
                 .scope(OidcScopes.PROFILE)
                 .tokenSettings(tokenSettings)

@@ -1,0 +1,34 @@
+spring:
+  cloud:
+    gateway:
+      server:
+        webmvc:
+          routes:
+            - id: userinfo
+              uri: https://auth.example.local:8077
+              predicates:
+                - Path=/user**
+              filters:
+                - PingHeaderRelay
+            - id: client1
+              uri: https://sso-client1:8081
+              predicates:
+                - Path=/mvc/**
+              filters:
+                - PingHeaderRelay
+            - id: client2
+              uri: https://sso-client2:8082
+              predicates:
+                - Path=/flux/**
+              filters:
+                - PingHeaderRelay
+            - id: client3
+              uri: https://sso-client3:8083
+              predicates:
+                - Path=/vaadin/**
+              filters:
+                - PingHeaderRelay
+
+logging:
+  level:
+    com.github.brane08.oauth2.sso: debug
