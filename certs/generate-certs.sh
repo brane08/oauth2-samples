@@ -4,7 +4,7 @@ set -e
 PASSWORD=changeit
 DAYS=365
 KEYSIZE=2048
-BASE_DOMAIN=example.com
+BASE_DOMAIN=example.local
 
 rm -f *.key *.pem *.crt *.csr *.srl *.p12 *.jks *.cnf
 
@@ -36,6 +36,9 @@ DNS.4=localhost
 DNS.5=sso-client1
 DNS.6=sso-client2
 DNS.7=sso-client3
+DNS.8=client1.${BASE_DOMAIN}
+DNS.9=client2.${BASE_DOMAIN}
+DNS.10=client3.${BASE_DOMAIN}
 IP.1=127.0.0.1
 EOF
 

@@ -305,8 +305,8 @@ public class JdbcAuthServerConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration strictConfig = new CorsConfiguration();
-        strictConfig.addAllowedOriginPattern("https://*.example.com:8078");
-        strictConfig.addAllowedOriginPattern("http://*.example.com:8040");
+        strictConfig.addAllowedOriginPattern("https://*.example.local:8078");
+        strictConfig.addAllowedOriginPattern("http://*.example.local:8040");
         strictConfig.setAllowCredentials(true);
         strictConfig.addAllowedMethod("POST");
         strictConfig.addAllowedMethod("GET");

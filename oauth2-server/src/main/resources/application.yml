@@ -16,14 +16,10 @@ server:
       cookie:
         http-only: true
         secure: true
-        same-site: lax
+        same-site: none
         name: "AUTHSESSIONID"
   tomcat:
     accept-count: 250
-  error:
-    include-exception: true
-    include-stacktrace: always
-    include-message: always
 
 spring:
   application:
@@ -46,6 +42,11 @@ spring:
   threads:
     virtual:
       enabled: true
+  web:
+    error:
+      include-exception: true
+      include-stacktrace: always
+      include-message: always
 
 logging:
   level:
@@ -70,5 +71,6 @@ management:
 
 sas:
   use-redirect-in-filter: false
-  gateway-url: https://sso.example.com:8040
-  issuer: https://auth.example.com:8077
+  gateway-url: https://gateway.example.local:8078
+  issuer: https://auth.example.local:8077
+  default-client-secret: "${DEFAULT_CLIENT_SECRET}"

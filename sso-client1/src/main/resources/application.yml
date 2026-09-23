@@ -3,6 +3,8 @@ server:
   port: 8081
   servlet:
     context-path: /mvc
+  tomcat:
+    redirect-context-root: false
   ssl:
     key-store-type: PKCS12
     key-store: "${user.dir}/../certs/services.p12"
@@ -35,7 +37,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: "https://auth.example.com:8077"
+          issuer-uri: "https://auth.example.local:8077"
   threads:
     virtual:
       enabled: true

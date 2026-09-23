@@ -88,7 +88,7 @@ public class ClientSecurityConfig {
 
     @Bean
     ReactiveJwtDecoder jwtDecoder() {
-        var issuer = "https://auth.example.com:8077";
+        var issuer = "https://auth.example.local:8077";
         var decoder = NimbusReactiveJwtDecoder.withJwkSetUri(issuer + "/oauth2/jwks").build();
         decoder.setJwtValidator(JwtValidators.createDefaultWithIssuer(issuer));
         return decoder;

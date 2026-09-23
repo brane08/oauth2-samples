@@ -70,7 +70,7 @@ public class WebMvcConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.addAllowedOriginPattern("https://*.example.com");
+        config.addAllowedOriginPattern("https://*.example.local");
         config.setAllowCredentials(true);
         config.addAllowedMethod("*");
         config.addAllowedHeader("*");

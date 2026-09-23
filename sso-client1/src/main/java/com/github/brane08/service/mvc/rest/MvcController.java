@@ -24,7 +24,7 @@ public class MvcController {
         this.service = service;
     }
 
-    @GetMapping("/")
+    @GetMapping({"", "/"})
     public String index(Model model) {
         model.addAttribute("filter", new CountryFilter());
         return "index";
@@ -47,8 +47,8 @@ public class MvcController {
         model.addAttribute("filter", filter);
 
         return FragmentsRendering
-                .fragment("fragments/countries :: table(countries)")
-                .fragment("fragments/countries :: pagination(countries, filter)")
+                .fragment("fragments/countries :: table(countries=${countries})")
+                .fragment("fragments/countries :: pagination(countries=${countries}, filter=${filter})")
                 .build();
     }
 
