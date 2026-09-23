@@ -1,5 +1,6 @@
 package com.github.brane08.oauth2.server.filters;
 
+import com.github.brane08.oauth2.server.web.utils.RequestUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -8,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -15,14 +17,16 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.savedrequest.RequestCache;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.WebUtils;
 
 import java.io.IOException;
-import java.util.Optional;
 
 public class SsoCookieAuthenticationFilter extends OncePerRequestFilter {
 
@@ -31,6 +35,7 @@ public class SsoCookieAuthenticationFilter extends OncePerRequestFilter {
 
     private final AuthenticationManager authenticationManager;
     private final SecurityContextRepository securityContextRepository;
+    private final SessionAuthenticationStrategy sessionAuthenticationStrategy;
     private final AuthenticationSuccessHandler successHandler;
     private final RequestCache requestCache;
     private final RequestMatcher staticResourcesMatcher;
@@ -38,9 +43,13 @@ public class SsoCookieAuthenticationFilter extends OncePerRequestFilter {
     private final RequestMatcher oauth2ProtectedMatcher;
     private final String gatewayBaseUrl;
     private final boolean useRedirectInFilter;
+    private final RequestMatcher authorizeEndpointMatcher = new OrRequestMatcher(
+            PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, "/oauth2/authorize"),
+            PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, "/oauth2/authorize/**"));
 
     public SsoCookieAuthenticationFilter(AuthenticationManager authenticationManager,
                                          SecurityContextRepository securityContextRepository,
+                                         SessionAuthenticationStrategy sessionAuthenticationStrategy,
                                          AuthenticationSuccessHandler successHandler,
                                          RequestCache requestCache,
                                          RequestMatcher staticResourcesMatcher,
@@ -50,6 +59,7 @@ public class SsoCookieAuthenticationFilter extends OncePerRequestFilter {
                                          boolean useRedirectInFilter) {
         this.authenticationManager = authenticationManager;
         this.securityContextRepository = securityContextRepository;
+        this.sessionAuthenticationStrategy = sessionAuthenticationStrategy;
         this.successHandler = successHandler;
         this.requestCache = requestCache;
         this.staticResourcesMatcher = staticResourcesMatcher;
@@ -85,17 +95,16 @@ public class SsoCookieAuthenticationFilter extends OncePerRequestFilter {
             if (useRedirectInFilter) {
                 LOG.debug("No cookie found in uri: {}, should redirect to gateway base", request.getRequestURI());
                 if (isHtmlRequest(request)) {
-                    String[] values = request.getParameterValues("sso_continue");
-                    int retryCount = 1;
-                    if (values != null && values.length > 0 && values[0] != null) {
-                        try {
-                            retryCount = Integer.parseInt(values[0]);
-                        } catch (NumberFormatException e) {
-                            LOG.warn("Could not parse 'sso_continue' integer: {}", values[0]);
-                        }
+                    int retryCount = RequestUtils.parseSsoRetryCount(request);
+                    if (retryCount >= RequestUtils.MAX_SSO_REDIRECT_ATTEMPTS) {
+                        LOG.warn("SSO redirect loop detected after {} attempts for uri: {}", retryCount, request.getRequestURI());
+                        response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+                        response.setContentType("application/json");
+                        response.getWriter().write("{\"error\":\"sso_loop_detected\",\"message\":\"Unable to establish SSO session after multiple attempts\"}");
+                        return;
                     }
                     LOG.debug("Authentication entrypoint handling html request, redirect to gateway base url");
-                    String redirectUrl = gatewayBaseUrl + "?sso_continue=" + retryCount;
+                    String redirectUrl = gatewayBaseUrl + "?sso_continue=" + (retryCount + 1);
                     response.setStatus(HttpServletResponse.SC_FOUND);
                     response.setHeader("Location", redirectUrl);
                     return;
@@ -119,13 +128,22 @@ public class SsoCookieAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContext context = SecurityContextHolder.createEmptyContext();
                 context.setAuthentication(authentication);
                 SecurityContextHolder.setContext(context);
+                // Rotates the session ID (preserving attributes) so a session ID an attacker
+                // planted before authentication cannot be ridden in as the authenticated user.
+                sessionAuthenticationStrategy.onAuthentication(authentication, request, response);
                 securityContextRepository.saveContext(context, request, response);
-                requestCache.saveRequest(request, response);
                 LOG.debug("SSO authentication successful for user {}", authentication.getName());
-                successHandler.onAuthenticationSuccess(request, response, authentication);
+                if (authorizeEndpointMatcher.matches(request)) {
+                    requestCache.saveRequest(request, response);
+                    successHandler.onAuthenticationSuccess(request, response, authentication);
+                    return;
+                }
+                // Non-browser protected endpoints (token/introspect/revoke/userinfo) must be
+                // served their actual response, not redirected by the success handler.
+                filterChain.doFilter(request, response);
                 return;
             } catch (AuthenticationException e) {
-                LOG.debug("SSO authentication unsuccessful for user {}", ssoCookie.getValue(), e);
+                LOG.debug("SSO authentication unsuccessful, uri: {}", request.getRequestURI(), e);
                 SecurityContextHolder.clearContext();
             }
         }
@@ -133,12 +151,9 @@ public class SsoCookieAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private Cookie getGatewayCookie(HttpServletRequest request) {
-        var cookie = WebUtils.getCookie(request, "GATEWAY_SSO");
-        if (cookie == null) {
-            logger.warn("Gateway sso cookie missing falling back to original sso cookie");
-            cookie = WebUtils.getCookie(request, "SSO_TOKEN");
-        }
-        return cookie;
+        // Only the gateway-transformed cookie is accepted here - falling back to the raw
+        // SSO_TOKEN cookie would let a caller skip whatever the transformation filter enforces.
+        return WebUtils.getCookie(request, "GATEWAY_SSO");
     }
 
     private boolean isHtmlRequest(HttpServletRequest request) {

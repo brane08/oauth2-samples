@@ -1,0 +1,222 @@
+name: oauth2-samples
+
+networks:
+  sso-net:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  mongo-data:
+
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: prore
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres-init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5432:5432"
+    networks:
+      sso-net:
+        aliases:
+          - postgres.example.local
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d prore"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  mongo:
+    image: mongo:7
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      sso-net:
+        aliases:
+          - mongo.example.local
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  oauth2-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: oauth2-server
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/prore?currentSchema=oauth2
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      DEFAULT_CLIENT_SECRET: ${DEFAULT_CLIENT_SECRET}
+      SERVER_SSL_KEY_STORE: /certs/services.p12
+      SERVER_SSL_KEY_STORE_PASSWORD: changeit
+      SERVER_SSL_KEY_STORE_TYPE: PKCS12
+      SERVER_SSL_TRUST_STORE: /certs/truststore.jks
+      SERVER_SSL_TRUST_STORE_PASSWORD: changeit
+      SERVER_SSL_TRUST_STORE_TYPE: JKS
+    volumes:
+      - ./certs:/certs:ro
+    networks:
+      sso-net:
+        aliases:
+          - auth.example.local
+    ports:
+      - "8077:8077"
+
+  sso-gateway-mvc:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: sso-gateway-mvc
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+      oauth2-server:
+        condition: service_started
+    environment:
+      SPRING_PROFILES_ACTIVE: ${GATEWAY_PROFILE:-}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/prore?currentSchema=oauth2
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      DEFAULT_CLIENT_SECRET: ${DEFAULT_CLIENT_SECRET}
+      SERVER_SSL_KEY_STORE: /certs/services.p12
+      SERVER_SSL_KEY_STORE_PASSWORD: changeit
+      SERVER_SSL_KEY_STORE_TYPE: PKCS12
+      SERVER_SSL_TRUST_STORE: /certs/truststore.jks
+      SERVER_SSL_TRUST_STORE_PASSWORD: changeit
+      SERVER_SSL_TRUST_STORE_TYPE: JKS
+    volumes:
+      - ./certs:/certs:ro
+    networks:
+      sso-net:
+        aliases:
+          - gateway.example.local
+    ports:
+      - "8078:8078"
+
+  httpd-sso-sim:
+    image: httpd:2.4
+    depends_on:
+      sso-gateway-mvc:
+        condition: service_started
+    volumes:
+      - ./docker/httpd/sso-sim.conf:/usr/local/apache2/conf/extra/sso-sim.conf:ro
+    command: >
+      sh -c "echo 'Include conf/extra/sso-sim.conf' >> /usr/local/apache2/conf/httpd.conf &&
+             httpd-foreground"
+    networks:
+      sso-net:
+        aliases:
+          - sso.example.local
+    ports:
+      - "8040:8040"
+
+  # Reactive alternative to sso-gateway-mvc — same role/port, don't run both at once.
+  # sso-gateway:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #     args:
+  #       MODULE: sso-gateway
+  #   ...
+
+  sso-client1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: sso-client1
+    depends_on:
+      postgres:
+        condition: service_healthy
+      oauth2-server:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/prore?currentSchema=oauth2
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SERVER_SSL_KEY_STORE: /certs/services.p12
+      SERVER_SSL_KEY_STORE_PASSWORD: changeit
+      SERVER_SSL_KEY_STORE_TYPE: PKCS12
+      SERVER_SSL_TRUST_STORE: /certs/truststore.jks
+      SERVER_SSL_TRUST_STORE_PASSWORD: changeit
+      SERVER_SSL_TRUST_STORE_TYPE: JKS
+    volumes:
+      - ./certs:/certs:ro
+    networks:
+      sso-net:
+        aliases:
+          - client1.example.local
+    ports:
+      - "8081:8081"
+
+  sso-client2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: sso-client2
+    depends_on:
+      oauth2-server:
+        condition: service_started
+    environment:
+      SERVER_SSL_KEY_STORE: /certs/services.p12
+      SERVER_SSL_KEY_STORE_PASSWORD: changeit
+      SERVER_SSL_KEY_STORE_TYPE: PKCS12
+      SERVER_SSL_TRUST_STORE: /certs/truststore.jks
+      SERVER_SSL_TRUST_STORE_PASSWORD: changeit
+      SERVER_SSL_TRUST_STORE_TYPE: JKS
+    volumes:
+      - ./certs:/certs:ro
+    networks:
+      sso-net:
+        aliases:
+          - client2.example.local
+    ports:
+      - "8082:8082"
+
+  sso-client3:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: sso-client3
+    depends_on:
+      postgres:
+        condition: service_healthy
+      oauth2-server:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/prore?currentSchema=oauth2
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SERVER_SSL_KEY_STORE: /certs/services.p12
+      SERVER_SSL_KEY_STORE_PASSWORD: changeit
+      SERVER_SSL_KEY_STORE_TYPE: PKCS12
+      SERVER_SSL_TRUST_STORE: /certs/truststore.jks
+      SERVER_SSL_TRUST_STORE_PASSWORD: changeit
+      SERVER_SSL_TRUST_STORE_TYPE: JKS
+    volumes:
+      - ./certs:/certs:ro
+    networks:
+      sso-net:
+        aliases:
+          - client3.example.local
+    ports:
+      - "8083:8083"

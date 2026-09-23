@@ -8,12 +8,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.ReactiveMongoDatabaseFactory;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.SimpleReactiveMongoDatabaseFactory;
-import org.springframework.session.data.mongo.config.annotation.web.http.EnableMongoHttpSession;
+import org.mongodb.spring.session.config.annotation.web.reactive.EnableMongoWebSession;
 
 import java.util.concurrent.TimeUnit;
 
 @Configuration
-@EnableMongoHttpSession(maxInactiveIntervalInSeconds = 3600)
+@EnableMongoWebSession(maxInactiveIntervalInSeconds = 3600)
 public class MongoSessionConfig {
 
     @Bean

@@ -21,7 +21,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: "https://auth.example.com:8077"
+          issuer-uri: "https://auth.example.local:8077"
 
 logging:
   level:

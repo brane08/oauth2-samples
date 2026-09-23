@@ -6,7 +6,7 @@ import com.mongodb.client.MongoClients;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.session.data.mongo.config.annotation.web.http.EnableMongoHttpSession;
+import org.mongodb.spring.session.config.annotation.web.http.EnableMongoHttpSession;
 
 import java.util.concurrent.TimeUnit;
 
